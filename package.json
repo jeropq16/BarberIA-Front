@@ -4,14 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:no-turbo": "next dev --no-turbo",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.13.2",
     "next": "16.0.6",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-toastify": "^11.0.5",
+    "sweetalert2": "^11.26.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

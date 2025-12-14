@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colores base - Modo oscuro por defecto */
+  --background: #000000;
+  --foreground: #ededed;
+  
+  /* Paleta de negros y grises */
+  --black-secondary: #0a0a0a;
+  --black-tertiary: #1a1a1a;
+  --gray-dark: #2a2a2a;
+  --gray-medium: #4a4a4a;
+  --gray-light: #9ca3af;
+  
+  /* Paleta de rojos (basada en el logo) */
+  --red-primary: #dc2626;
+  --red-hover: #b91c1c;
+  --red-dark: #7f1d1d;
+  --red-darker: #991b1b;
+  --red-error: #ef4444;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-lato), sans-serif;
+  --font-family-display: var(--font-qwigley), cursive;
+  
+  /* Colores personalizados para Tailwind */
+  --color-red-primary: var(--red-primary);
+  --color-red-hover: var(--red-hover);
+  --color-red-dark: var(--red-dark);
+  --color-red-error: var(--red-error);
+  --color-black-secondary: var(--black-secondary);
+  --color-black-tertiary: var(--black-tertiary);
+  --color-gray-dark: var(--gray-dark);
+  --color-gray-medium: var(--gray-medium);
+  --color-gray-light: var(--gray-light);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.font-display {
+  font-family: var(--font-qwigley), cursive;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  text-transform: none;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-lato), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Subtítulos con Covered By Your Grace */
+p.subtitle,
+.subtitle {
+  font-family: var(--font-covered), cursive;
+  letter-spacing: 0.02em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-qwigley), cursive;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  text-transform: none;
 }
