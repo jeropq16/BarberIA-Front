@@ -1,0 +1,232 @@
+/* Navbar Styles */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.container {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+    .container {
+        padding: 0 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        padding: 0 2rem;
+    }
+}
+
+.content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 5rem;
+}
+
+.logoContainer {
+    flex-shrink: 0;
+}
+
+.logoLink {
+    display: flex;
+    align-items: center;
+}
+
+.logoImage {
+    object-fit: contain;
+}
+
+/* Menu Items - Desktop */
+.menuDesktop {
+    display: none;
+    align-items: center;
+    gap: 2.5rem;
+}
+
+@media (min-width: 768px) {
+    .menuDesktop {
+        display: flex;
+    }
+}
+
+.menuItem {
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    position: relative;
+    display: inline-block;
+}
+
+.menuItem:hover {
+    color: #dc2626;
+}
+
+.menuItem::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #dc2626;
+    transition: width 0.3s ease;
+}
+
+.menuItem:hover::after {
+    width: 100%;
+}
+
+/* Social Links - Desktop */
+.socialDesktop {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .socialDesktop {
+        display: flex;
+    }
+}
+
+.socialLink {
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+}
+
+.socialLink:hover {
+    color: #dc2626;
+}
+
+.socialIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* User Button */
+.userButton {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.userButton:hover {
+    color: #dc2626;
+}
+
+.userIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Mobile Menu Button */
+.mobileButton {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+.mobileButton:hover {
+    color: #dc2626;
+}
+
+@media (min-width: 768px) {
+    .mobileButton {
+        display: none;
+    }
+}
+
+.mobileIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Mobile Menu */
+.mobileMenu {
+    display: block;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(26, 26, 26, 1);
+}
+
+@media (min-width: 768px) {
+    .mobileMenu {
+        display: none;
+    }
+}
+
+.mobileMenuContent {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mobileMenuItem {
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+}
+
+.mobileMenuItem:hover {
+    color: #dc2626;
+}
+
+.mobileSocialContainer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(26, 26, 26, 1);
+}
+
+.mobileSocialLink {
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+}
+
+.mobileSocialLink:hover {
+    color: #dc2626;
+}
+
+.mobileUserButton {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobileUserButton:hover {
+    color: #dc2626;
+}
+
+.mobileUserIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
