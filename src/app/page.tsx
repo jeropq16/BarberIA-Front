@@ -9,6 +9,7 @@ import BarberCard, { type Barber } from '@/components/landing/BarberCard'
 import Loading from '@/components/ui/Loading'
 import { getHaircuts, type HairCutResponse } from '@/services/haircuts'
 import { getBarbers, type UserProfileResponse } from '@/services/users'
+import ChatBot from "@/components/ChatBot"
 
 export default function Home() {
   const router = useRouter();
@@ -163,6 +164,8 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      {/*CHATBOT*/}
+      <ChatBot/>
     </div>
   );
 }
