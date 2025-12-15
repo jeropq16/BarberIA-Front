@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authenticatedAxios } from '@/helpers/api';
 
 /**
  * Interfaces para tipar las respuestas del API
@@ -77,6 +78,82 @@ export const getBarbers = async (): Promise<UserProfileResponse[]> => {
             throw error;
         }
         throw new Error('Error desconocido al obtener barberos');
+    }
+};
+
+/**
+ * Interfaz para actualizar usuario
+ */
+export interface UpdateUserRequest {
+    fullName: string;
+    phoneNumber: string | null;
+}
+
+/**
+ * Interfaz para respuesta de subida de foto
+ */
+export interface UploadPhotoResponse {
+    url: string;
+}
+
+/**
+ * Servicio: Obtener el perfil del usuario autenticado
+ * Requiere autenticación (Bearer Token)
+ */
+export const getUserProfile = async (): Promise<UserProfileResponse> => {
+    try {
+        const response = await authenticatedAxios.get<UserProfileResponse>('/users/profile');
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw error;
+        }
+        throw new Error('Error desconocido al obtener perfil');
+    }
+};
+
+/**
+ * Servicio: Actualizar información de un usuario
+ * Requiere autenticación (Bearer Token)
+ * Solo actualiza: fullName y phoneNumber
+ */
+export const updateUser = async (id: number, data: UpdateUserRequest): Promise<void> => {
+    try {
+        await authenticatedAxios.put(`/users/${id}`, data);
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw error;
+        }
+        throw new Error('Error desconocido al actualizar usuario');
+    }
+};
+
+/**
+ * Servicio: Subir/actualizar foto de perfil de un usuario
+ * Requiere autenticación (Bearer Token)
+ * El archivo se sube a Cloudinary automáticamente por el backend
+ */
+export const uploadUserPhoto = async (id: number, file: File): Promise<string> => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await authenticatedAxios.put<UploadPhotoResponse>(
+            `/users/${id}/upload-photo`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+
+        return response.data.url;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw error;
+        }
+        throw new Error('Error desconocido al subir foto');
     }
 };
 

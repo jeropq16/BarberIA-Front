@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authenticatedAxios } from '@/helpers/api';
 
 /**
  * Interfaces para tipar las respuestas del API
@@ -92,7 +93,7 @@ export interface UpdatePaymentStatusRequest {
 
 /**
  * Servicio: Obtener todas las citas
- * El backend filtra por rol automáticamente
+ * Requiere autenticación - El backend filtra por rol automáticamente
  */
 export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
     try {
@@ -112,6 +113,7 @@ export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
 
 /**
  * Servicio: Obtener una cita por ID
+ * Nota: Verificar si este endpoint requiere autenticación según el backend
  */
 export const getAppointmentById = async (id: number): Promise<AppointmentResponse> => {
     try {
@@ -218,6 +220,7 @@ export const updateAppointment = async (
 
 /**
  * Servicio: Cancelar una cita
+ * Requiere autenticación - Cliente: solo sus citas, Admin: cualquier cita
  */
 export const cancelAppointment = async (id: number): Promise<void> => {
     try {
@@ -235,7 +238,8 @@ export const cancelAppointment = async (id: number): Promise<void> => {
 };
 
 /**
- * Servicio: Completar una cita (solo para barberos y admin)
+ * Servicio: Completar una cita
+ * Requiere autenticación - Barbero: solo sus citas, Admin: cualquier cita
  */
 export const completeAppointment = async (id: number): Promise<AppointmentResponse> => {
     try {
@@ -257,6 +261,7 @@ export const completeAppointment = async (id: number): Promise<AppointmentRespon
 
 /**
  * Servicio: Actualizar estado de pago
+ * Requiere autenticación - Cliente: solo sus citas, Admin: cualquier cita
  */
 export const updatePaymentStatus = async (
     id: number,
@@ -282,6 +287,7 @@ export const updatePaymentStatus = async (
 
 /**
  * Servicio: Obtener horarios disponibles
+ * Público - No requiere autenticación según la lógica de negocio
  */
 export const getAvailability = async (
     barberId: number,

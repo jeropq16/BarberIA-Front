@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, ReactElement } from 'react'
+import { useState, ReactElement, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
+import Avatar from '@/components/ui/Avatar'
+import { useAuth } from '@/context/AuthContext'
 import styles from '@/styles/Navbar.module.css'
 
 export interface NavbarProps {
@@ -22,14 +24,46 @@ export default function Navbar({
     ],
 }: NavbarProps) {
     const router = useRouter()
+    const { isAuthenticated, user, logout } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+    const userMenuRef = useRef<HTMLDivElement>(null)
     
     // Logo blanco para navbar (fondo oscuro siempre)
     const logoPath = logo || '/logo blanco.png'
 
+    // Cerrar menú de usuario al hacer click fuera
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false)
+            }
+        }
+
+        if (isUserMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [isUserMenuOpen])
+
     // Redirigir al login
     const handleLoginClick = () => {
         router.push('/login')
+    }
+
+    // Manejar logout
+    const handleLogout = () => {
+        logout()
+        setIsUserMenuOpen(false)
+    }
+
+    // Manejar click en perfil
+    const handleProfileClick = () => {
+        router.push('/profile')
+        setIsUserMenuOpen(false)
     }
 
     const getSocialIcon = (): ReactElement => {
@@ -85,14 +119,51 @@ export default function Navbar({
                                 {getSocialIcon()}
                             </span>
                         </a>
-                        {/* Icono de usuario para login */}
-                        <button
-                            onClick={handleLoginClick}
-                            className={styles.userButton}
-                            aria-label="Iniciar sesión"
-                        >
-                            <UserIcon className={styles.userIcon} />
-                        </button>
+                        {/* Usuario autenticado: mostrar dropdown, sino: botón de login */}
+                        {isAuthenticated && user ? (
+                            <div className={styles.userMenuContainer} ref={userMenuRef}>
+                                <button
+                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                    className={styles.userButton}
+                                    aria-label="Menú de usuario"
+                                >
+                                    <Avatar
+                                        src={user.profile?.profilePhotoUrl || undefined}
+                                        alt={user.fullName}
+                                        size="sm"
+                                    />
+                                </button>
+                                {isUserMenuOpen && (
+                                    <div className={styles.userDropdown}>
+                                        <div className={styles.userDropdownHeader}>
+                                            <p className={styles.userName}>{user.fullName}</p>
+                                            <p className={styles.userEmail}>{user.email}</p>
+                                        </div>
+                                        <div className={styles.userDropdownDivider} />
+                                        <button
+                                            onClick={handleProfileClick}
+                                            className={styles.userDropdownItem}
+                                        >
+                                            Mi Perfil
+                                        </button>
+                                        <button
+                                            onClick={handleLogout}
+                                            className={styles.userDropdownItem}
+                                        >
+                                            Cerrar Sesión
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleLoginClick}
+                                className={styles.userButton}
+                                aria-label="Iniciar sesión"
+                            >
+                                <UserIcon className={styles.userIcon} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -134,17 +205,46 @@ export default function Navbar({
                                 >
                                     {getSocialIcon()}
                                 </a>
-                                {/* Icono de usuario para login - Mobile */}
-                                <button
-                                    onClick={() => {
-                                        setIsMenuOpen(false)
-                                        handleLoginClick()
-                                    }}
-                                    className={styles.mobileUserButton}
-                                    aria-label="Iniciar sesión"
-                                >
-                                    <UserIcon className={styles.mobileUserIcon} />
-                                </button>
+                                {/* Usuario autenticado: mostrar opciones, sino: botón de login - Mobile */}
+                                {isAuthenticated && user ? (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setIsMenuOpen(false)
+                                                handleProfileClick()
+                                            }}
+                                            className={styles.mobileUserButton}
+                                            aria-label="Mi Perfil"
+                                        >
+                                            <Avatar
+                                                src={user.profile?.profilePhotoUrl || undefined}
+                                                alt={user.fullName}
+                                                size="sm"
+                                            />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsMenuOpen(false)
+                                                handleLogout()
+                                            }}
+                                            className={styles.mobileUserButton}
+                                            aria-label="Cerrar Sesión"
+                                        >
+                                            <UserIcon className={styles.mobileUserIcon} />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false)
+                                            handleLoginClick()
+                                        }}
+                                        className={styles.mobileUserButton}
+                                        aria-label="Iniciar sesión"
+                                    >
+                                        <UserIcon className={styles.mobileUserIcon} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
