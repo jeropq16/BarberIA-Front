@@ -28,6 +28,9 @@ export interface UserProfileResponse {
 export const getUsers = async (): Promise<UserProfileResponse[]> => {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
+        }
         // Intentar obtener usuarios (puede fallar si no existe el endpoint)
         const response = await axios.get<UserProfileResponse[]>(`${apiUrl}/users`);
         return response.data;
@@ -50,6 +53,9 @@ export const getUsers = async (): Promise<UserProfileResponse[]> => {
 export const getUserById = async (id: number): Promise<UserProfileResponse> => {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
+        }
         const response = await axios.get<UserProfileResponse>(`${apiUrl}/users/${id}`);
         return response.data;
     } catch (error) {
