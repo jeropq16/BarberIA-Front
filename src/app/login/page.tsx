@@ -10,8 +10,8 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/context/AuthContext";
 
 interface LoginForm {
-  email: string;
-  password: string;
+    email: string;
+    password: string;
 }
 
 const BACKGROUND_IMAGE =
