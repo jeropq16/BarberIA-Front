@@ -27,6 +27,10 @@ const coveredByYourGrace = Covered_By_Your_Grace({
 export const metadata: Metadata = {
   title: "Ghetto Barber",
   description: "Estilo urbano, tradición de barrio",
+  icons:{
+    icon:"img/logo_negro.png",
+  }
+    
 };
 
 export default function RootLayout({

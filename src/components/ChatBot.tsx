@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 interface Message {
   sender: "user" | "bot";
@@ -93,9 +94,24 @@ ${data.confidenceLevel}`
   return (
     <>
       {/* BOTÓN FLOTANTE */}
-      <button className="chatbot-button" onClick={() => setIsOpen(!isOpen)}>
-        💬
-      </button>
+     <button className="chatbot-button" onClick={() => setIsOpen(!isOpen)} className="fixed bottom-6 right-6 
+             w-16 h-16 
+             rounded-full 
+             bg-transparent 
+             border-2 border-red-600 
+             flex items-center justify-center
+             hover:bg-red-600/10 
+             transition-all duration-300
+             shadow-lg">
+      <Image
+      src="/img/logo_blanco.png"
+      alt="Logo"
+      width={60}
+      height={60}
+      priority
+  />
+</button>
+
 
       {isOpen && (
         <div className="chatbot-window">
@@ -106,7 +122,7 @@ ${data.confidenceLevel}`
           </div>
 
           {/* MENSAJES */}
-          <div className="chatbot-messages">
+          <div className="chatbot-messages custom-scroll">
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -116,7 +132,7 @@ ${data.confidenceLevel}`
               >
                 {msg.text}
                 {msg.imageUrl && (
-                  <img
+                  <Image
                     src={msg.imageUrl}
                     alt="imagen"
                     style={{
@@ -156,6 +172,7 @@ ${data.confidenceLevel}`
 
             <button onClick={sendMessage}>Enviar</button>
           </div>
+          
         </div>
       )}
     </>

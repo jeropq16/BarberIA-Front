@@ -166,3 +166,28 @@ h1, h2, h3, h4, h5, h6 {
   padding: 8px 10px;
   cursor: pointer;
 }
+
+/* Para Chrome, Edge, Safari */
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #dc2626, #7f1d1d);
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ef4444;
+}
+
+/* Para Firefox */
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #dc2626 rgba(0, 0, 0, 0.8);
+}
