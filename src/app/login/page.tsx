@@ -170,7 +170,7 @@ export default function LoginPage() {
         }}
       > 
         <div className="flex justify-center mb-4">
-          <Image src="/logo_blanco.png" alt="Logo" width={140} height={140} priority />
+          <Image src="/img/logo_blanco.png" alt="Logo" width={120} height={120} priority  className="mx-auto mb-6"/>
         </div>
 
         <h1 className="text-center text-red-500 text-2xl font-bold mb-4">

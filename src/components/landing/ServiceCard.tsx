@@ -36,41 +36,65 @@ export default function ServiceCard({
         const mins = minutes % 60
         return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`
     }
-
     return (
-        <Card
-            variant="elevated"
-            className={`cursor-pointer hover:border-[#dc2626] transition-all duration-200 ${className}`}
-            onClick={() => onSelect?.(haircut)}
-        >
-            <CardContent className="p-6">
-                {/* Nombre del servicio */}
-                <h3 className="text-2xl text-white mb-3 tracking-wide" style={{ fontFamily: 'var(--font-qwigley), cursive' }}>
-                    {haircut.name}
-                </h3>
+  <Card
+  variant="elevated"
+  onClick={() => onSelect?.(haircut)}
+  className={`
+    cursor-pointer
+    min-h-[220px]
+    flex flex-col
+    justify-between
+    border border-[#1a1a1a]
+    bg-gradient-to-b from-black to-[#0a0a0a]
+    hover:border-[#dc2626]
+    hover:shadow-[0_0_25px_rgba(220,38,38,0.25)]
+    hover:-translate-y-[2px]
+    transition-all duration-300 ease-out
+    ${className}
+  `}
+  >
+    <CardContent className="p-6 flex flex-col h-full">
+      {/* NOMBRE */}
+      <h3
+        className="text-2xl text-white mb-2 tracking-wide"
+        style={{ fontFamily: 'var(--font-Covered_By_Your_Grace), cursive' }}
+      >
+        {haircut.name}
+      </h3>
 
-                {/* Descripción */}
-                {haircut.description && (
-                    <p className="text-[#9ca3af] text-sm mb-4 line-clamp-3">
-                        {haircut.description}
-                    </p>
-                )}
+      {/* DESCRIPCIÓN */}
+      {haircut.description && (
+        <p className="text-[#9ca3af] text-sm mb-4 line-clamp-2">
+          {haircut.description}
+        </p>
+      )}
 
-                {/* Información de precio y duración */}
-                <div className="flex items-center justify-between pt-4 border-t border-[#1a1a1a]">
-                    <div>
-                        <p className="text-2xl font-bold text-[#dc2626]">
-                            {formatPrice(haircut.price)}
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-sm text-[#9ca3af]">Duración</p>
-                        <p className="text-base font-semibold text-white">
-                            {formatDuration(haircut.durationMinutes)}
-                        </p>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    )
+      {/* ESPACIADOR */}
+      <div className="flex-1" />
+
+      {/* FOOTER */}
+      <div className="pt-4 border-t border-[#1a1a1a] flex items-center justify-between">
+        <div>
+          <p className="text-[#dc2626] text-2xl font-bold leading-none">
+            {formatPrice(haircut.price)}
+          </p>
+          <p className="text-xs text-[#9ca3af] mt-1">
+            Servicio
+          </p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-xs text-[#9ca3af] uppercase tracking-wide">
+            Duración
+          </p>
+          <p className="text-base font-semibold text-white">
+            {formatDuration(haircut.durationMinutes)}
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)
+
 }
