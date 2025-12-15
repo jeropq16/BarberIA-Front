@@ -8,8 +8,8 @@ import Image from "next/image";
 import { GoogleLogin } from "@react-oauth/google";
 
 interface LoginForm {
-  email: string;
-  password: string;
+    email: string;
+    password: string;
 }
 
 interface RegisterForm {
