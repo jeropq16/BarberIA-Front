@@ -1,4 +1,20 @@
+<<<<<<< Updated upstream
 import Image from "next/image";
+=======
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Navbar from '@/components/landing/Navbar'
+import HeroSection from '@/components/landing/HeroSection'
+import ServiceCard, { type Haircut } from '@/components/landing/ServiceCard'
+import BarberCard, { type Barber } from '@/components/landing/BarberCard'
+import Loading from '@/components/ui/Loading'
+import { getHaircuts, type HairCutResponse } from '@/services/haircuts'
+import { getBarbers, type UserProfileResponse } from '@/services/users'
+import ChatBot from '@/components/ChatBot';
+
+>>>>>>> Stashed changes
 
 export default function Home() {
   return (
@@ -59,7 +75,23 @@ export default function Home() {
             Documentation
           </a>
         </div>
+<<<<<<< Updated upstream
       </main>
+=======
+      </section>
+
+      <footer className="bg-black border-t border-white/10 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mt-8 pt-8 border-t border-white/10 text-center">
+            <p className="text-white/50 text-xs tracking-widest">
+              © 2025 GHETTO BARBER - ESTILO URBANO, TRADICIÓN DE BARRIO
+            </p>
+          </div>
+        </div>
+      </footer>
+      {/*CHATBOT*/}
+      <ChatBot/>
+>>>>>>> Stashed changes
     </div>
   );
 }
