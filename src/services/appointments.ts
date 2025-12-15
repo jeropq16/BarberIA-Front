@@ -79,7 +79,7 @@ export interface UpdatePaymentStatusRequest {
  */
 export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         const response = await axios.get<AppointmentResponse[]>(`${apiUrl}/appointments/all`);
         return response.data;
     } catch (error) {
@@ -95,7 +95,7 @@ export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
  */
 export const getAppointmentById = async (id: number): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         const response = await axios.get<AppointmentResponse>(`${apiUrl}/appointments/${id}`);
         return response.data;
     } catch (error) {
@@ -113,7 +113,7 @@ export const createAppointment = async (
     data: CreateAppointmentRequest
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         const response = await axios.post<AppointmentResponse>(
             `${apiUrl}/appointments`,
             data
@@ -135,7 +135,7 @@ export const updateAppointment = async (
     data: UpdateAppointmentRequest
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         const response = await axios.put<AppointmentResponse>(
             `${apiUrl}/appointments/${id}`,
             data
@@ -154,7 +154,7 @@ export const updateAppointment = async (
  */
 export const cancelAppointment = async (id: number): Promise<void> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         await axios.delete(`${apiUrl}/appointments/${id}`);
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -169,7 +169,7 @@ export const cancelAppointment = async (id: number): Promise<void> => {
  */
 export const completeAppointment = async (id: number): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         const response = await axios.put<AppointmentResponse>(
             `${apiUrl}/appointments/${id}/complete`
         );
@@ -190,7 +190,7 @@ export const updatePaymentStatus = async (
     data: UpdatePaymentStatusRequest
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         const response = await axios.put<AppointmentResponse>(
             `${apiUrl}/appointments/${id}/payment-status`,
             data
@@ -212,7 +212,7 @@ export const getAvailability = async (
     date: string // YYYY-MM-DD
 ): Promise<AvailabilityResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
         const response = await axios.get<AvailabilityResponse>(
             `${apiUrl}/appointments/availability`,
             {
