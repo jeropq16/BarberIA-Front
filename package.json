@@ -10,12 +10,17 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "framer-motion": "^12.23.25",
-    "next": "16.0.6",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.13.2",
+    "date-fns": "^4.1.0",
+    "next": "16.0.10",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-toastify": "^11.0.5",
+    "sweetalert2": "^11.26.10",
     "react-hook-form": "^7.67.0",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.9",
+    "framer-motion": "^12.23.25"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
