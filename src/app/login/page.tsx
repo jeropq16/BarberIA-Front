@@ -2,18 +2,14 @@
 
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { GoogleLogin } from "@react-oauth/google";
+import { useAuth } from "@/context/AuthContext";
 
 interface LoginForm {
-  email: string;
-  password: string;
-}
-
-interface RegisterForm {
-  name: string;
   email: string;
   password: string;
 }
@@ -23,96 +19,134 @@ const BACKGROUND_IMAGE =
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const loginForm = useForm<LoginForm>();
-  const registerForm = useForm<RegisterForm>();
 
-  const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
-  // LOGIN NORMAL
   const onLogin = async (data: LoginForm) => {
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
+      const res = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!res.ok) {
-        setError("Credenciales incorrectas");
+        const errorData = await res.json().catch(() => ({}));
+        setError(errorData.message || "Credenciales incorrectas");
         return;
       }
 
       const result = await res.json();
-      localStorage.setItem("token", result.token);
-      router.push("/appoinment");
-    } catch {
-      setError("Error al conectar con el servidor");
+      
+      if (!result.token) {
+        setError("Error: No se recibió el token de autenticación");
+        return;
+      }
+
+      await login(result.token);
+    } catch (error: any) {
+      setError(error?.message || "Error al conectar con el servidor");
     } finally {
       setLoading(false);
     }
   };
 
-  // LOGIN GOOGLE
-  const onGoogleLoginSuccess = async (response: any) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/google/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: response.credential,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        setError("Error al iniciar sesión con Google");
-        return;
-      }
-
-      const result = await res.json();
-      localStorage.setItem("token", result.token);
-      router.push("/appoinment");
-    } catch {
-      setError("No se pudo conectar con Google");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // REGISTER
-  const onRegister = async (data: RegisterForm) => {
+  const onGoogleLoginSuccess = async (credentialResponse: any) => {
     setLoading(true);
     setError("");
-    setSuccess("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) {
-        setError("No se pudo registrar");
+      if (!credentialResponse?.credential) {
+        setError("Error: No se recibió el token de Google");
+        setLoading(false);
         return;
       }
 
-      setSuccess("Registro exitoso, ahora inicia sesión");
-      setIsRegister(false);
-      registerForm.reset();
-    } catch {
-      setError("Error al conectar con el servidor");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      
+      if (!apiUrl) {
+        setError("Error: URL del API no configurada");
+        setLoading(false);
+        return;
+      }
+
+      const requestBody = {
+        GoogleToken: credentialResponse.credential,
+      };
+
+      const res = await fetch(`${apiUrl}/auth/google/login`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!res.ok) {
+        let errorData;
+        try {
+          errorData = await res.json();
+        } catch {
+          errorData = { message: `Error ${res.status}: ${res.statusText}` };
+        }
+        
+        let errorMessage = errorData.title || 
+                          errorData.message || 
+                          errorData.error || 
+                          `Error ${res.status}: ${res.statusText}`;
+        
+        if (errorData.errors) {
+          const validationErrors = Object.entries(errorData.errors)
+            .map(([field, messages]: [string, any]) => {
+              const msg = Array.isArray(messages) ? messages.join(', ') : messages;
+              return `${field}: ${msg}`;
+            })
+            .join('; ');
+          
+          if (validationErrors) {
+            errorMessage = `${errorMessage} (${validationErrors})`;
+          }
+        }
+        
+        if (errorMessage.includes("untrusted 'aud' claim")) {
+          errorMessage = "Error de configuración del servidor. Por favor, contacta al administrador.";
+        } else if (errorMessage.includes("InvalidJwtException")) {
+          errorMessage = "El token de Google no es válido. Por favor, intenta de nuevo.";
+        }
+        
+        setError(errorMessage);
+        setLoading(false);
+        return;
+      }
+
+      const result = await res.json();
+      
+      if (!result.token) {
+        setError("Error: No se recibió el token de autenticación del servidor");
+        setLoading(false);
+        return;
+      }
+
+      await login(result.token);
+    } catch (error: any) {
+      let errorMessage = "No se pudo conectar con el servidor. Por favor, intenta de nuevo.";
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -140,110 +174,64 @@ export default function LoginPage() {
         </div>
 
         <h1 className="text-center text-red-500 text-2xl font-bold mb-4">
-          {isRegister ? "Crear cuenta" : "Iniciar sesión"}
+          Iniciar sesión
         </h1>
 
-        <AnimatePresence mode="wait">
-          {!isRegister ? (
-            <motion.form
-              key="login"
-              onSubmit={loginForm.handleSubmit(onLogin)}
-              className="space-y-4"
-            >
-              <input
-                type="email"
-                placeholder="Correo"
-                {...loginForm.register("email")}
-                className="w-full p-3 rounded-xl bg-black/80 text-white border border-red-700"
-                required
-              />
+        <motion.form
+          onSubmit={loginForm.handleSubmit(onLogin)}
+          className="space-y-4"
+        >
+          <input
+            type="email"
+            placeholder="Correo"
+            {...loginForm.register("email")}
+            className="w-full p-3 rounded-xl bg-black/80 text-white border border-red-700"
+            required
+          />
 
-              <input
-                type="password"
-                placeholder="Contraseña"
-                {...loginForm.register("password")}
-                className="w-full p-3 rounded-xl bg-black/80 text-white border border-red-700"
-                required
-              />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            {...loginForm.register("password")}
+            className="w-full p-3 rounded-xl bg-black/80 text-white border border-red-700"
+            required
+          />
 
-              <button
-                disabled={loading}
-                className="w-full py-3 rounded-xl bg-red-600 font-semibold"
-              >
-                {loading ? "Ingresando..." : "Entrar"}
-              </button>
+          <button
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-red-600 font-semibold disabled:opacity-50"
+          >
+            {loading ? "Ingresando..." : "Entrar"}
+          </button>
 
-              {/* DIVISOR */}
-              <div className="my-3 flex items-center gap-2 text-gray-400">
-                <div className="flex-1 h-px bg-gray-600" />
-                <span className="text-xs">O</span>
-                <div className="flex-1 h-px bg-gray-600" />
-              </div>
+          <div className="my-3 flex items-center gap-2 text-gray-400">
+            <div className="flex-1 h-px bg-gray-600" />
+            <span className="text-xs">O</span>
+            <div className="flex-1 h-px bg-gray-600" />
+          </div>
 
-              {/* BOTÓN GOOGLE */}
-              <div className="flex justify-center">
-                <GoogleLogin
-                  onSuccess={onGoogleLoginSuccess}
-                  onError={() => setError("Google falló")}
-                  theme="filled_black"
-                  shape="pill"
-                />
-              </div>
-            </motion.form>
-          ) : (
-            <motion.form
-              key="register"
-              onSubmit={registerForm.handleSubmit(onRegister)}
-              className="space-y-4"
-            >
-              <input
-                type="text"
-                placeholder="Nombre"
-                {...registerForm.register("name")}
-                className="w-full p-3 rounded-xl bg-black/80 text-white border border-red-700"
-                required
-              />
-
-              <input
-                type="email"
-                placeholder="Correo"
-                {...registerForm.register("email")}
-                className="w-full p-3 rounded-xl bg-black/80 text-white border border-red-700"
-                required
-              />
-
-              <input
-                type="password"
-                placeholder="Contraseña"
-                {...registerForm.register("password")}
-                className="w-full p-3 rounded-xl bg-black/80 text-white border border-red-700"
-                required
-              />
-
-              <button
-                disabled={loading}
-                className="w-full py-3 rounded-xl bg-red-600 font-semibold"
-              >
-                {loading ? "Registrando..." : "Registrarse"}
-              </button>
-            </motion.form>
-          )}
-        </AnimatePresence>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={onGoogleLoginSuccess}
+              onError={() => {
+                setError("Error al autenticar con Google. Por favor, intenta de nuevo.");
+                setLoading(false);
+              }}
+              theme="filled_black"
+              shape="pill"
+              useOneTap={false}
+              auto_select={false}
+            />
+          </div>
+        </motion.form>
 
         {error && <p className="text-red-400 text-center mt-3">{error}</p>}
-        {success && <p className="text-green-400 text-center mt-3">{success}</p>}
 
         <p className="text-center text-sm mt-4 text-gray-300">
-          {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
-          <button
-            onClick={() => {
-              setError("");
-              setIsRegister(!isRegister);
-            }}
-            className="text-red-500 underline ml-1"
-          >
-            {isRegister ? "Inicia sesión" : "Regístrate"}
-          </button>
+          ¿No tienes cuenta?{" "}
+          <Link href="/register" className="text-red-500 underline ml-1">
+            Regístrate
+          </Link>
         </p>
       </motion.div>
     </div>
