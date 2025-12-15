@@ -4,29 +4,29 @@ import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/ui/Loading'
 import Card from '@/components/ui/Card'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import AppointmentTable from '@/components/appointments/AppointmentTable'
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar'
 import AppointmentCard from '@/components/appointments/AppointmentCard'
 import Modal from '@/components/ui/Modal'
 import AppointmentForm from '@/components/appointments/AppointmentForm'
 import { getAllAppointments, AppointmentResponse } from '@/services/appointments'
+import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/helpers/toast'
 import { showErrorAlert } from '@/helpers/alerts'
 import Link from 'next/link'
 
-// TODO: Este valor debería venir del contexto de autenticación
-// Por ahora se usa un valor por defecto o se puede pasar como prop
-const DEFAULT_USER_ROLE = 1 // 1=Client, 2=Barber, 3=Admin
-
 type ViewMode = 'table' | 'calendar' | 'cards'
 
 export default function AppointmentsPage() {
+    const { user } = useAuth()
     const [appointments, setAppointments] = useState<AppointmentResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [viewMode, setViewMode] = useState<ViewMode>('table')
-    const [userRole, setUserRole] = useState<number>(DEFAULT_USER_ROLE)
     const [editingAppointment, setEditingAppointment] = useState<AppointmentResponse | null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    
+    const userRole = user?.role || 1
 
     const loadAppointments = async () => {
         setLoading(true)
@@ -43,10 +43,10 @@ export default function AppointmentsPage() {
     }
 
     useEffect(() => {
-        loadAppointments()
-        // TODO: Obtener el rol del usuario del contexto de autenticación
-        // Por ahora se mantiene el valor por defecto
-    }, [])
+        if (user) {
+            loadAppointments()
+        }
+    }, [user])
 
     const handleEdit = (appointment: AppointmentResponse) => {
         setEditingAppointment(appointment)
@@ -66,6 +66,7 @@ export default function AppointmentsPage() {
     }
 
     return (
+        <ProtectedRoute>
         <div className="min-h-screen bg-black text-white p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
@@ -183,6 +184,7 @@ export default function AppointmentsPage() {
                 )}
             </Modal>
         </div>
+        </ProtectedRoute>
     )
 }
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authenticatedAxios } from '@/helpers/api';
 
 /**
  * Interfaces para tipar las respuestas del API
@@ -75,12 +76,11 @@ export interface UpdatePaymentStatusRequest {
 
 /**
  * Servicio: Obtener todas las citas
- * El backend filtra por rol automáticamente
+ * Requiere autenticación - El backend filtra por rol automáticamente
  */
 export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
-        const response = await axios.get<AppointmentResponse[]>(`${apiUrl}/appointments/all`);
+        const response = await authenticatedAxios.get<AppointmentResponse[]>('/appointments/all');
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -92,10 +92,11 @@ export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
 
 /**
  * Servicio: Obtener una cita por ID
+ * Nota: Verificar si este endpoint requiere autenticación según el backend
  */
 export const getAppointmentById = async (id: number): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const response = await axios.get<AppointmentResponse>(`${apiUrl}/appointments/${id}`);
         return response.data;
     } catch (error) {
@@ -108,12 +109,13 @@ export const getAppointmentById = async (id: number): Promise<AppointmentRespons
 
 /**
  * Servicio: Crear una nueva cita
+ * Público - No requiere autenticación según la lógica de negocio
  */
 export const createAppointment = async (
     data: CreateAppointmentRequest
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const response = await axios.post<AppointmentResponse>(
             `${apiUrl}/appointments`,
             data
@@ -129,15 +131,15 @@ export const createAppointment = async (
 
 /**
  * Servicio: Actualizar una cita
+ * Requiere autenticación - Requiere política OwnerOrAdmin
  */
 export const updateAppointment = async (
     id: number,
     data: UpdateAppointmentRequest
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
-        const response = await axios.put<AppointmentResponse>(
-            `${apiUrl}/appointments/${id}`,
+        const response = await authenticatedAxios.put<AppointmentResponse>(
+            `/appointments/${id}`,
             data
         );
         return response.data;
@@ -151,11 +153,11 @@ export const updateAppointment = async (
 
 /**
  * Servicio: Cancelar una cita
+ * Requiere autenticación - Cliente: solo sus citas, Admin: cualquier cita
  */
 export const cancelAppointment = async (id: number): Promise<void> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
-        await axios.delete(`${apiUrl}/appointments/${id}`);
+        await authenticatedAxios.delete(`/appointments/${id}`);
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw error;
@@ -165,13 +167,13 @@ export const cancelAppointment = async (id: number): Promise<void> => {
 };
 
 /**
- * Servicio: Completar una cita (solo para barberos y admin)
+ * Servicio: Completar una cita
+ * Requiere autenticación - Barbero: solo sus citas, Admin: cualquier cita
  */
 export const completeAppointment = async (id: number): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
-        const response = await axios.put<AppointmentResponse>(
-            `${apiUrl}/appointments/${id}/complete`
+        const response = await authenticatedAxios.put<AppointmentResponse>(
+            `/appointments/${id}/complete`
         );
         return response.data;
     } catch (error) {
@@ -184,15 +186,15 @@ export const completeAppointment = async (id: number): Promise<AppointmentRespon
 
 /**
  * Servicio: Actualizar estado de pago
+ * Requiere autenticación - Cliente: solo sus citas, Admin: cualquier cita
  */
 export const updatePaymentStatus = async (
     id: number,
     data: UpdatePaymentStatusRequest
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
-        const response = await axios.put<AppointmentResponse>(
-            `${apiUrl}/appointments/${id}/payment-status`,
+        const response = await authenticatedAxios.put<AppointmentResponse>(
+            `/appointments/${id}/payment-status`,
             data
         );
         return response.data;
@@ -206,13 +208,14 @@ export const updatePaymentStatus = async (
 
 /**
  * Servicio: Obtener horarios disponibles
+ * Público - No requiere autenticación según la lógica de negocio
  */
 export const getAvailability = async (
     barberId: number,
     date: string // YYYY-MM-DD
 ): Promise<AvailabilityResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://barbackend-1.onrender.com';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const response = await axios.get<AvailabilityResponse>(
             `${apiUrl}/appointments/availability`,
             {
