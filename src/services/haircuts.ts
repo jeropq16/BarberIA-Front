@@ -17,7 +17,10 @@ export interface HairCutResponse {
  */
 export const getHaircuts = async (): Promise<HairCutResponse[]> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
+        }
         const response = await axios.get<HairCutResponse[]>(`${apiUrl}/haircuts`);
         return response.data;
     } catch (error) {

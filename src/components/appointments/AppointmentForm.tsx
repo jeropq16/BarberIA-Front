@@ -6,7 +6,7 @@ import Input from '../ui/Input'
 import Loading from '../ui/Loading'
 import { getHaircuts, HairCutResponse } from '@/services/haircuts'
 import { getBarbers, UserProfileResponse } from '@/services/users'
-import { getAvailability, createAppointment, updateAppointment, CreateAppointmentRequest, UpdateAppointmentRequest, AppointmentResponse } from '@/services/appointments'
+import { getAvailability, createAppointment, updateAppointment, CreateAppointmentFormData, UpdateAppointmentFormData, AppointmentResponse } from '@/services/appointments'
 import { showToast } from '@/helpers/toast'
 import { showErrorAlert } from '@/helpers/alerts'
 
@@ -70,31 +70,98 @@ export default function AppointmentForm({
         loadData()
     }, [])
 
-    // Cargar disponibilidad cuando cambian barbero o fecha
+    // Función para convertir fecha de YYYY-MM-DD (formato input) a YYYY/MM/DD (formato backend)
+    const convertDateForBackend = (dateString: string): string => {
+        // El input type="date" siempre devuelve YYYY-MM-DD
+        // El backend espera YYYY/MM/DD
+        return dateString.replace(/-/g, '/')
+    }
+
+    // Cargar disponibilidad cuando cambian barbero, fecha o servicio
     useEffect(() => {
-        if (barberId && appointmentDate) {
-            loadAvailability()
-        } else {
+        // Limpiar tiempos disponibles si no hay barbero o fecha
+        // Nota: El backend puede requerir también el haircutId, pero lo intentamos sin él primero
+        if (!barberId || !appointmentDate) {
             setAvailableTimes([])
             setAppointmentTime('')
+            return
         }
-    }, [barberId, appointmentDate])
 
-    const loadAvailability = async () => {
-        if (!barberId || !appointmentDate) return
+        // Validar que la fecha esté en formato YYYY-MM-DD (formato del input)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate)) {
+            setAvailableTimes([])
+            setAppointmentTime('')
+            return
+        }
+
+        // Agregar un pequeño delay para evitar múltiples llamadas
+        const timeoutId = setTimeout(() => {
+            loadAvailability(appointmentDate)
+        }, 300)
+
+        return () => clearTimeout(timeoutId)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [barberId, appointmentDate, haircutId])
+
+    const loadAvailability = async (date: string) => {
+        if (!barberId || !date) {
+            setAvailableTimes([])
+            return
+        }
+
+        // Validar formato YYYY-MM-DD (formato del input)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            setAvailableTimes([])
+            return
+        }
 
         setLoadingAvailability(true)
         try {
-            const availability = await getAvailability(barberId, appointmentDate)
-            setAvailableTimes(availability.availableTimes)
+            // El backend requiere barberId, date y haircutId según Swagger
+            // Si no hay haircutId seleccionado, no podemos obtener disponibilidad
+            if (!haircutId || haircutId <= 0) {
+                setAvailableTimes([])
+                setLoadingAvailability(false)
+                return
+            }
+
+            // Convertir fecha de YYYY-MM-DD a YYYY/MM/DD para el backend
+            const dateForBackend = convertDateForBackend(date)
+
+            // Pasar haircutId (requerido por el backend)
+            const availability = await getAvailability(barberId, dateForBackend, haircutId)
+
+            // Asegurarse de que availableTimes siempre sea un array
+            const times = Array.isArray(availability?.availableTimes)
+                ? availability.availableTimes
+                : []
+            setAvailableTimes(times)
 
             // Si la hora actual no está disponible, limpiarla
-            if (appointmentTime && !availability.availableTimes.includes(appointmentTime)) {
+            if (appointmentTime && times.length > 0 && !times.includes(appointmentTime)) {
                 setAppointmentTime('')
             }
-        } catch (error) {
-            showToast.error('No se pudo cargar la disponibilidad')
-            setAvailableTimes([])
+        } catch (error: any) {
+            // Log detallado del error
+            if (error.response?.status === 500) {
+                console.error('Error 500 del backend al obtener disponibilidad:', {
+                    barberId,
+                    date,
+                    haircutId,
+                    error: error.response?.data
+                })
+                // Si el error dice "Servicio no encontrado", puede ser que el haircutId no exista
+                if (error.response?.data?.message?.includes('Servicio') ||
+                    error.response?.data?.message?.includes('servicio')) {
+                    console.warn('El servicio (haircutId) puede no existir o ser inválido')
+                    showToast.error('El servicio seleccionado no es válido')
+                } else {
+                    showToast.error('No se pudo cargar la disponibilidad')
+                }
+            } else {
+                showToast.error('No se pudo cargar la disponibilidad')
+            }
+            setAvailableTimes([]) // Asegurar que siempre sea un array vacío
         } finally {
             setLoadingAvailability(false)
         }
@@ -114,19 +181,27 @@ export default function AppointmentForm({
         if (!appointmentDate) {
             newErrors.appointmentDate = 'Debes seleccionar una fecha'
         } else {
-            // Validar que no sea fecha pasada
-            const selectedDate = new Date(appointmentDate)
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-            if (selectedDate < today) {
-                newErrors.appointmentDate = 'No puedes seleccionar una fecha pasada'
+            // Validar formato YYYY-MM-DD (formato del input)
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate)) {
+                newErrors.appointmentDate = 'Fecha inválida'
+            } else {
+                // Validar que no sea fecha pasada
+                const selectedDate = new Date(appointmentDate)
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                if (selectedDate < today) {
+                    newErrors.appointmentDate = 'No puedes seleccionar una fecha pasada'
+                }
             }
         }
 
         if (!appointmentTime) {
             newErrors.appointmentTime = 'Debes seleccionar una hora'
-        } else if (availableTimes.length > 0 && !availableTimes.includes(appointmentTime)) {
-            newErrors.appointmentTime = 'La hora seleccionada no está disponible'
+        } else {
+            const times = Array.isArray(availableTimes) ? availableTimes : []
+            if (times.length > 0 && !times.includes(appointmentTime)) {
+                newErrors.appointmentTime = 'La hora seleccionada no está disponible'
+            }
         }
 
         setErrors(newErrors)
@@ -143,31 +218,59 @@ export default function AppointmentForm({
 
         setLoading(true)
         try {
+            // Validar que la fecha esté en formato YYYY-MM-DD (formato del input)
+            if (!appointmentDate || !/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate)) {
+                showToast.error('Fecha inválida')
+                setLoading(false)
+                return
+            }
+
             if (isEditing) {
-                const updateData: UpdateAppointmentRequest = {
+                const updateData: UpdateAppointmentFormData = {
                     barberId,
                     haircutId,
-                    appointmentDate,
+                    appointmentDate, // Mantener en formato YYYY-MM-DD para el servicio
                     appointmentTime,
                     notes: notes || undefined,
                 }
                 await updateAppointment(appointment.id, updateData)
                 showToast.success('Cita actualizada correctamente')
             } else {
-                const createData: CreateAppointmentRequest = {
+                // Obtener el clientId del usuario autenticado
+                const storedUser = localStorage.getItem('user')
+                if (!storedUser) {
+                    showErrorAlert('Error', 'No se encontró información del usuario. Por favor, inicia sesión nuevamente.')
+                    setLoading(false)
+                    return
+                }
+
+                let clientId: number
+                try {
+                    const user = JSON.parse(storedUser)
+                    clientId = user.id
+                    if (!clientId || clientId <= 0) {
+                        throw new Error('ID de usuario inválido')
+                    }
+                } catch (error) {
+                    showErrorAlert('Error', 'No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.')
+                    setLoading(false)
+                    return
+                }
+
+                const createData: CreateAppointmentFormData = {
                     barberId,
                     haircutId,
-                    appointmentDate,
+                    appointmentDate, // Mantener en formato YYYY-MM-DD para el servicio
                     appointmentTime,
                     notes: notes || undefined,
                 }
-                await createAppointment(createData)
+                await createAppointment(createData, clientId)
                 showToast.success('Cita creada correctamente')
             }
             onSuccess()
         } catch (error: any) {
             const errorMessage =
-                error.response?.data?.message || 'Error al guardar la cita'
+                error.response?.data?.message || error.message || 'Error al guardar la cita'
             showErrorAlert('Error', errorMessage)
         } finally {
             setLoading(false)
@@ -184,6 +287,40 @@ export default function AppointmentForm({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Selección de Servicio (primero, porque es requerido para disponibilidad) */}
+            <div>
+                <label className="block mb-2 text-sm font-medium text-white">
+                    Servicio *
+                </label>
+                <select
+                    value={haircutId}
+                    onChange={(e) => {
+                        const newHaircutId = Number(e.target.value)
+                        setHaircutId(newHaircutId)
+                        // Si cambia el servicio, limpiar la hora seleccionada
+                        if (newHaircutId !== haircutId) {
+                            setAppointmentTime('')
+                        }
+                    }}
+                    className="w-full px-4 py-2 text-white bg-[#000000] border-2 border-[#dc2626] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:ring-offset-2 focus:ring-offset-black"
+                >
+                    <option value={0}>Selecciona un servicio</option>
+                    {haircuts.map((haircut) => (
+                        <option key={haircut.id} value={haircut.id}>
+                            {haircut.name} - ${haircut.price} ({haircut.durationMinutes} min)
+                        </option>
+                    ))}
+                </select>
+                {errors.haircutId && (
+                    <p className="mt-1 text-sm text-[#ef4444]">{errors.haircutId}</p>
+                )}
+                {!haircutId && (
+                    <p className="mt-1 text-sm text-[#9ca3af]">
+                        Selecciona un servicio para ver los horarios disponibles
+                    </p>
+                )}
+            </div>
+
             {/* Selección de Barbero */}
             <div>
                 <label className="block mb-2 text-sm font-medium text-white">
@@ -206,35 +343,24 @@ export default function AppointmentForm({
                 )}
             </div>
 
-            {/* Selección de Servicio */}
-            <div>
-                <label className="block mb-2 text-sm font-medium text-white">
-                    Servicio *
-                </label>
-                <select
-                    value={haircutId}
-                    onChange={(e) => setHaircutId(Number(e.target.value))}
-                    className="w-full px-4 py-2 text-white bg-[#000000] border-2 border-[#dc2626] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:ring-offset-2 focus:ring-offset-black"
-                >
-                    <option value={0}>Selecciona un servicio</option>
-                    {haircuts.map((haircut) => (
-                        <option key={haircut.id} value={haircut.id}>
-                            {haircut.name} - ${haircut.price} ({haircut.durationMinutes} min)
-                        </option>
-                    ))}
-                </select>
-                {errors.haircutId && (
-                    <p className="mt-1 text-sm text-[#ef4444]">{errors.haircutId}</p>
-                )}
-            </div>
-
             {/* Selección de Fecha */}
             <div>
                 <Input
                     label="Fecha *"
                     type="date"
                     value={appointmentDate}
-                    onChange={(e) => setAppointmentDate(e.target.value)}
+                    onChange={(e) => {
+                        // El input type="date" siempre devuelve formato YYYY-MM-DD
+                        setAppointmentDate(e.target.value)
+                        // Limpiar error si existe
+                        if (errors.appointmentDate) {
+                            setErrors(prev => {
+                                const newErrors = { ...prev }
+                                delete newErrors.appointmentDate
+                                return newErrors
+                            })
+                        }
+                    }}
                     error={errors.appointmentDate}
                     min={new Date().toISOString().split('T')[0]}
                 />
@@ -250,7 +376,7 @@ export default function AppointmentForm({
                         <Loading size="sm" />
                         <span>Cargando horarios disponibles...</span>
                     </div>
-                ) : availableTimes.length === 0 && barberId && appointmentDate ? (
+                ) : (Array.isArray(availableTimes) ? availableTimes : []).length === 0 && barberId && appointmentDate ? (
                     <p className="text-sm text-[#ef4444]">
                         No hay horarios disponibles para esta fecha
                     </p>
@@ -258,11 +384,11 @@ export default function AppointmentForm({
                     <select
                         value={appointmentTime}
                         onChange={(e) => setAppointmentTime(e.target.value)}
-                        disabled={!barberId || !appointmentDate || availableTimes.length === 0}
+                        disabled={!barberId || !appointmentDate || (Array.isArray(availableTimes) ? availableTimes : []).length === 0}
                         className="w-full px-4 py-2 text-white bg-[#000000] border-2 border-[#dc2626] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <option value="">Selecciona una hora</option>
-                        {availableTimes.map((time) => (
+                        {(Array.isArray(availableTimes) ? availableTimes : []).map((time) => (
                             <option key={time} value={time}>
                                 {time}
                             </option>
