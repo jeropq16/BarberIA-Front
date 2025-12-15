@@ -10,6 +10,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@react-oauth/google": "^0.12.2",
     "framer-motion": "^12.23.25",
     "next": "16.0.6",
     "react": "19.2.0",
