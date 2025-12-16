@@ -262,13 +262,25 @@ function StaffRegistrationForm({ onSuccess, onCancel }: { onSuccess: () => void,
     const onSubmit = async (data: CreateStaffRequest) => {
         setIsLoading(true)
         try {
+            // Enviar datos tal cual (rol como string)
             await createStaff(data)
-            showToast.success(`Usuario ${data.role} creado exitosamente`)
+            showToast.success(`Usuario creado exitosamente`)
             onSuccess()
         } catch (error: any) {
-            console.error(error)
-            const msg = error.response?.data?.message || "Error al crear staff"
-            showToast.error(msg)
+            console.error("Error creating staff:", error)
+
+            if (error.response?.data?.errors) {
+                // Manejar errores de validación estructurados (ej: .NET)
+                const apiErrors = error.response.data.errors
+                // Obtener el primer mensaje de error que encontremos
+                const errorKey = Object.keys(apiErrors)[0]
+                const errorMessages = apiErrors[errorKey]
+                const firstErrorMessage = Array.isArray(errorMessages) ? errorMessages[0] : "Error de validación"
+                showToast.error(`${errorKey}: ${firstErrorMessage}`)
+            } else {
+                const msg = error.response?.data?.message || "Error al crear staff"
+                showToast.error(msg)
+            }
         } finally {
             setIsLoading(false)
         }
@@ -296,6 +308,24 @@ function StaffRegistrationForm({ onSuccess, onCancel }: { onSuccess: () => void,
             </div>
 
             <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
+                <input
+                    type="password"
+                    {...register("password", {
+                        required: "La contraseña es requerida",
+                        minLength: { value: 6, message: "Mínimo 6 caracteres" },
+                        pattern: {
+                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                            message: "Debe contener mayúscula, minúscula y número"
+                        }
+                    })}
+                    className="w-full p-2 rounded bg-[#1a1a1a] border border-[#333] text-white focus:border-red-500 outline-none transition-colors"
+                    placeholder="Ej: Password123!"
+                />
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+            </div>
+
+            <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Rol</label>
                 <select
                     {...register("role", { required: "El rol es requerido" })}
@@ -314,4 +344,3 @@ function StaffRegistrationForm({ onSuccess, onCancel }: { onSuccess: () => void,
         </form>
     )
 }
-

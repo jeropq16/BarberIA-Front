@@ -163,7 +163,8 @@ export const uploadUserPhoto = async (id: number, file: File): Promise<string> =
 export interface CreateStaffRequest {
     fullName: string;
     email: string;
-    role: "Barber" | "Admin" | "Client";
+    password: string;
+    role: string;
 }
 
 /**

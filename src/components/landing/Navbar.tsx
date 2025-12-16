@@ -146,7 +146,7 @@ export default function Navbar({
                                                 // Redirigir según el rol
                                                 if (user.role === 3) router.push('/dashboard-admin')
                                                 else if (user.role === 2) router.push('/dashboard-barber')
-                                                else router.push('/dashboard-client')
+                                                else router.push('/appointments')
                                             }}
                                             className={styles.userDropdownItem}
                                         >
