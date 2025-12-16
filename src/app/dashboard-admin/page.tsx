@@ -17,8 +17,8 @@ import { showErrorAlert } from '@/helpers/alerts'
 
 type ViewMode = 'table' | 'calendar' | 'cards'
 
-export default function AppointmentsPage() {
-    const { user, isClient, isLoading: authLoading } = useAuth()
+export default function DashboardAdminPage() {
+    const { user, isLoading: authLoading } = useAuth()
     const [appointments, setAppointments] = useState<AppointmentResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [viewMode, setViewMode] = useState<ViewMode>('table')
@@ -54,8 +54,16 @@ export default function AppointmentsPage() {
     }
 
     useEffect(() => {
-        if (!authLoading && user) {
+        // Esperar a que termine la carga de autenticación
+        if (authLoading) return
+        
+        // Si hay usuario, cargar citas
+        if (user) {
             loadAppointments()
+        } else {
+            // Si no hay usuario después de cargar, puede ser que el token sea inválido
+            // El ProtectedRoute debería redirigir, pero por si acaso mostramos un mensaje
+            setLoading(false)
         }
     }, [user, authLoading])
 
@@ -68,6 +76,7 @@ export default function AppointmentsPage() {
         loadAppointments()
     }
 
+    // Mostrar loading si está cargando autenticación o citas
     if (authLoading || loading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
@@ -77,20 +86,18 @@ export default function AppointmentsPage() {
     }
 
     return (
-        <ProtectedRoute allowedRoles={[UserRole.Client]}>
+        <ProtectedRoute allowedRoles={[UserRole.Admin]}>
             <div className="min-h-screen bg-black text-white p-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Header */}
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'var(--font-covered)' }}>
-                            GESTIÓN DE CITAS
+                            ADMINISTRACIÓN DE CITAS
                         </h1>
                         <p className="text-[#9ca3af] text-lg">
-                            Administra y visualiza todas tus citas
+                            Gestiona todas las citas del sistema
                         </p>
                     </div>
 
-                    {/* Acciones y controles */}
                     <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
                         <div className="flex gap-2">
                             <Button
@@ -120,14 +127,13 @@ export default function AppointmentsPage() {
                         </Button>
                     </div>
 
-                    {/* Contenido según el modo de vista */}
                     <div className="mt-6">
                         {viewMode === 'table' && (
                             <Card>
                                 <div className="p-6">
                                     <AppointmentTable
                                         appointments={appointments}
-                                        userRole={UserRole.Client}
+                                        userRole={UserRole.Admin}
                                         userId={user?.id}
                                         onRefresh={handleRefresh}
                                     />
@@ -140,7 +146,7 @@ export default function AppointmentsPage() {
                                 <div className="p-6">
                                     <AppointmentCalendar
                                         appointments={appointments}
-                                        userRole={UserRole.Client}
+                                        userRole={UserRole.Admin}
                                         userId={user?.id}
                                         onRefresh={handleRefresh}
                                         onEdit={handleEdit}
@@ -160,7 +166,7 @@ export default function AppointmentsPage() {
                                         <AppointmentCard
                                             key={appointment.id}
                                             appointment={appointment}
-                                            userRole={UserRole.Client}
+                                            userRole={UserRole.Admin}
                                             userId={user?.id}
                                             onRefresh={handleRefresh}
                                             onEdit={handleEdit}
@@ -172,7 +178,6 @@ export default function AppointmentsPage() {
                     </div>
                 </div>
 
-                {/* Modal de creación */}
                 <Modal
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
@@ -185,11 +190,10 @@ export default function AppointmentsPage() {
                             handleRefresh()
                         }}
                         onCancel={() => setIsCreateModalOpen(false)}
-                        userRole={UserRole.Client}
+                        userRole={UserRole.Admin}
                     />
                 </Modal>
 
-                {/* Modal de edición */}
                 <Modal
                     isOpen={isEditModalOpen}
                     onClose={() => {
@@ -211,7 +215,7 @@ export default function AppointmentsPage() {
                                 setIsEditModalOpen(false)
                                 setEditingAppointment(null)
                             }}
-                            userRole={UserRole.Client}
+                            userRole={UserRole.Admin}
                         />
                     )}
                 </Modal>

@@ -13,6 +13,7 @@ import {
     completeAppointment,
     updatePaymentStatus,
 } from '@/services/appointments'
+import { UserRole } from '@/helpers/auth'
 import { showToast } from '@/helpers/toast'
 import { showCancelAppointmentAlert, showConfirmAlert } from '@/helpers/alerts'
 import { format } from 'date-fns'
@@ -20,13 +21,15 @@ import { es } from 'date-fns/locale/es'
 
 interface AppointmentTableProps {
     appointments: AppointmentResponse[]
-    userRole?: number // 1=Client, 2=Barber, 3=Admin
+    userRole?: UserRole
+    userId?: number
     onRefresh: () => void
 }
 
 export default function AppointmentTable({
     appointments,
-    userRole = 1,
+    userRole = UserRole.Client,
+    userId,
     onRefresh,
 }: AppointmentTableProps) {
     const [editingAppointment, setEditingAppointment] = useState<AppointmentResponse | null>(null)
@@ -131,30 +134,74 @@ export default function AppointmentTable({
     }
 
     const canEdit = (appointment: AppointmentResponse) => {
-        return (
-            appointment.status !== AppointmentStatus.Completed &&
-            appointment.status !== AppointmentStatus.Canceled
-        )
+        if (appointment.status === AppointmentStatus.Completed || 
+            appointment.status === AppointmentStatus.Canceled) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Client && userId && appointment.clientId === userId) {
+            return true
+        }
+        
+        if (userRole === UserRole.Barber && userId && appointment.barberId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     const canCancel = (appointment: AppointmentResponse) => {
-        return appointment.status !== AppointmentStatus.Completed
+        if (appointment.status === AppointmentStatus.Completed) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Client && userId && appointment.clientId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     const canComplete = (appointment: AppointmentResponse) => {
-        return (
-            (userRole === 2 || userRole === 3) &&
-            appointment.status !== AppointmentStatus.Completed &&
-            appointment.status !== AppointmentStatus.Canceled
-        )
+        if (appointment.status === AppointmentStatus.Completed || 
+            appointment.status === AppointmentStatus.Canceled) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Barber && userId && appointment.barberId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     const canChangePayment = (appointment: AppointmentResponse) => {
-        return (
-            (userRole === 1 || userRole === 3) &&
-            appointment.status !== AppointmentStatus.Completed &&
-            appointment.status !== AppointmentStatus.Canceled
-        )
+        if (appointment.status === AppointmentStatus.Completed || 
+            appointment.status === AppointmentStatus.Canceled) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Client && userId && appointment.clientId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     if (appointments.length === 0) {

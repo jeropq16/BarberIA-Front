@@ -12,6 +12,7 @@ import {
     completeAppointment,
     updatePaymentStatus,
 } from '@/services/appointments'
+import { UserRole } from '@/helpers/auth'
 import { showToast } from '@/helpers/toast'
 import { showCancelAppointmentAlert, showConfirmAlert } from '@/helpers/alerts'
 import { format } from 'date-fns'
@@ -19,14 +20,16 @@ import { es } from 'date-fns/locale/es'
 
 interface AppointmentCardProps {
     appointment: AppointmentResponse
-    userRole?: number // 1=Client, 2=Barber, 3=Admin
+    userRole?: UserRole
+    userId?: number
     onRefresh: () => void
     onEdit?: (appointment: AppointmentResponse) => void
 }
 
 export default function AppointmentCard({
     appointment,
-    userRole = 1,
+    userRole = UserRole.Client,
+    userId,
     onRefresh,
     onEdit,
 }: AppointmentCardProps) {
@@ -102,30 +105,74 @@ export default function AppointmentCard({
     }
 
     const canEdit = () => {
-        return (
-            appointment.status !== AppointmentStatus.Completed &&
-            appointment.status !== AppointmentStatus.Canceled
-        )
+        if (appointment.status === AppointmentStatus.Completed || 
+            appointment.status === AppointmentStatus.Canceled) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Client && userId && appointment.clientId === userId) {
+            return true
+        }
+        
+        if (userRole === UserRole.Barber && userId && appointment.barberId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     const canCancel = () => {
-        return appointment.status !== AppointmentStatus.Completed
+        if (appointment.status === AppointmentStatus.Completed) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Client && userId && appointment.clientId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     const canComplete = () => {
-        return (
-            (userRole === 2 || userRole === 3) &&
-            appointment.status !== AppointmentStatus.Completed &&
-            appointment.status !== AppointmentStatus.Canceled
-        )
+        if (appointment.status === AppointmentStatus.Completed || 
+            appointment.status === AppointmentStatus.Canceled) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Barber && userId && appointment.barberId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     const canChangePayment = () => {
-        return (
-            (userRole === 1 || userRole === 3) &&
-            appointment.status !== AppointmentStatus.Completed &&
-            appointment.status !== AppointmentStatus.Canceled
-        )
+        if (appointment.status === AppointmentStatus.Completed || 
+            appointment.status === AppointmentStatus.Canceled) {
+            return false
+        }
+        
+        if (userRole === UserRole.Admin) {
+            return true
+        }
+        
+        if (userRole === UserRole.Client && userId && appointment.clientId === userId) {
+            return true
+        }
+        
+        return false
     }
 
     return (

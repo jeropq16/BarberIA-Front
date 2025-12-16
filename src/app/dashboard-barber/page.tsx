@@ -17,14 +17,13 @@ import { showErrorAlert } from '@/helpers/alerts'
 
 type ViewMode = 'table' | 'calendar' | 'cards'
 
-export default function AppointmentsPage() {
-    const { user, isClient, isLoading: authLoading } = useAuth()
+export default function DashboardBarberPage() {
+    const { user, isLoading: authLoading } = useAuth()
     const [appointments, setAppointments] = useState<AppointmentResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [viewMode, setViewMode] = useState<ViewMode>('table')
     const [editingAppointment, setEditingAppointment] = useState<AppointmentResponse | null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
     const loadAppointments = async () => {
         setLoading(true)
@@ -77,20 +76,18 @@ export default function AppointmentsPage() {
     }
 
     return (
-        <ProtectedRoute allowedRoles={[UserRole.Client]}>
+        <ProtectedRoute allowedRoles={[UserRole.Barber]}>
             <div className="min-h-screen bg-black text-white p-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Header */}
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'var(--font-covered)' }}>
-                            GESTIÓN DE CITAS
+                            MIS CITAS ASIGNADAS
                         </h1>
                         <p className="text-[#9ca3af] text-lg">
-                            Administra y visualiza todas tus citas
+                            Gestiona las citas que te han sido asignadas
                         </p>
                     </div>
 
-                    {/* Acciones y controles */}
                     <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
                         <div className="flex gap-2">
                             <Button
@@ -112,22 +109,15 @@ export default function AppointmentsPage() {
                                 Tarjetas
                             </Button>
                         </div>
-                        <Button
-                            variant="primary"
-                            onClick={() => setIsCreateModalOpen(true)}
-                        >
-                            + Nueva Cita
-                        </Button>
                     </div>
 
-                    {/* Contenido según el modo de vista */}
                     <div className="mt-6">
                         {viewMode === 'table' && (
                             <Card>
                                 <div className="p-6">
                                     <AppointmentTable
                                         appointments={appointments}
-                                        userRole={UserRole.Client}
+                                        userRole={UserRole.Barber}
                                         userId={user?.id}
                                         onRefresh={handleRefresh}
                                     />
@@ -140,7 +130,7 @@ export default function AppointmentsPage() {
                                 <div className="p-6">
                                     <AppointmentCalendar
                                         appointments={appointments}
-                                        userRole={UserRole.Client}
+                                        userRole={UserRole.Barber}
                                         userId={user?.id}
                                         onRefresh={handleRefresh}
                                         onEdit={handleEdit}
@@ -153,14 +143,14 @@ export default function AppointmentsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {appointments.length === 0 ? (
                                     <div className="col-span-full text-center py-12">
-                                        <p className="text-[#9ca3af] text-lg">No hay citas registradas</p>
+                                        <p className="text-[#9ca3af] text-lg">No hay citas asignadas</p>
                                     </div>
                                 ) : (
                                     appointments.map((appointment) => (
                                         <AppointmentCard
                                             key={appointment.id}
                                             appointment={appointment}
-                                            userRole={UserRole.Client}
+                                            userRole={UserRole.Barber}
                                             userId={user?.id}
                                             onRefresh={handleRefresh}
                                             onEdit={handleEdit}
@@ -172,24 +162,6 @@ export default function AppointmentsPage() {
                     </div>
                 </div>
 
-                {/* Modal de creación */}
-                <Modal
-                    isOpen={isCreateModalOpen}
-                    onClose={() => setIsCreateModalOpen(false)}
-                    title="Crear Nueva Cita"
-                    size="lg"
-                >
-                    <AppointmentForm
-                        onSuccess={() => {
-                            setIsCreateModalOpen(false)
-                            handleRefresh()
-                        }}
-                        onCancel={() => setIsCreateModalOpen(false)}
-                        userRole={UserRole.Client}
-                    />
-                </Modal>
-
-                {/* Modal de edición */}
                 <Modal
                     isOpen={isEditModalOpen}
                     onClose={() => {
@@ -211,7 +183,7 @@ export default function AppointmentsPage() {
                                 setIsEditModalOpen(false)
                                 setEditingAppointment(null)
                             }}
-                            userRole={UserRole.Client}
+                            userRole={UserRole.Barber}
                         />
                     )}
                 </Modal>

@@ -7,6 +7,7 @@ import Loading from '../ui/Loading'
 import { getHaircuts, HairCutResponse } from '@/services/haircuts'
 import { getBarbers, UserProfileResponse } from '@/services/users'
 import { getAvailability, createAppointment, updateAppointment, CreateAppointmentFormData, UpdateAppointmentFormData, AppointmentResponse } from '@/services/appointments'
+import { UserRole } from '@/helpers/auth'
 import { showToast } from '@/helpers/toast'
 import { showErrorAlert } from '@/helpers/alerts'
 
@@ -14,14 +15,14 @@ interface AppointmentFormProps {
     appointment?: AppointmentResponse
     onSuccess: () => void
     onCancel: () => void
-    userRole?: number // 1=Client, 2=Barber, 3=Admin
+    userRole?: UserRole
 }
 
 export default function AppointmentForm({
     appointment,
     onSuccess,
     onCancel,
-    userRole = 1,
+    userRole = UserRole.Client,
 }: AppointmentFormProps) {
     const isEditing = !!appointment
 
