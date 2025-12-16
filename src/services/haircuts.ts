@@ -27,7 +27,8 @@ export const getHaircuts = async (): Promise<HairCutResponse[]> => {
         if (axios.isAxiosError(error)) {
             throw error;
         }
-        throw new Error('Error desconocido al obtener servicios de corte');
+        console.error("Error original en getHaircuts:", error);
+        throw new Error(`Error desconocido al obtener servicios de corte: ${error instanceof Error ? error.message : String(error)}`);
     }
 };
 

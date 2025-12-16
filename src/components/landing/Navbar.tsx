@@ -30,7 +30,7 @@ export default function Navbar({
     const userMenuRef = useRef<HTMLDivElement>(null)
 
     // Logo blanco para navbar (fondo oscuro siempre)
-    const logoPath = logo || '/logo blanco.png'
+    const logoPath = logo || '/img/logo_blanco.png'
 
     // Cerrar menú de usuario al hacer click fuera
     useEffect(() => {
