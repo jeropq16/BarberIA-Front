@@ -1,5 +1,6 @@
 'use client'
 
+import Navbar from '@/components/landing/Navbar'
 import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/ui/Loading'
@@ -30,7 +31,12 @@ export default function AppointmentsPage() {
         setLoading(true)
         try {
             const data = await getAllAppointments()
-            setAppointments(data)
+            // Filtrar solo las citas de este cliente
+            const myAppointments = data.filter(appt => {
+                const clientId = appt.client?.id || appt.clientId;
+                return Number(clientId) === Number(user?.id);
+            });
+            setAppointments(myAppointments)
         } catch (error: any) {
             console.error('Error loading appointments:', error)
             let errorMessage = 'Error al cargar las citas'
@@ -78,8 +84,10 @@ export default function AppointmentsPage() {
 
     return (
         <ProtectedRoute allowedRoles={[UserRole.Client]}>
-            <div className="min-h-screen bg-black text-white p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-black text-white">
+                <Navbar menuItems={[]} />
+
+                <div className="p-6 max-w-7xl mx-auto pt-24">
                     {/* Header */}
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold mb-2 mt-20" style={{ fontFamily: 'var(--font-covered)' }}>

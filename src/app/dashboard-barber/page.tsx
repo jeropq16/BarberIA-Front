@@ -1,5 +1,6 @@
 'use client'
 
+import Navbar from '@/components/landing/Navbar'
 import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/ui/Loading'
@@ -29,7 +30,12 @@ export default function DashboardBarberPage() {
         setLoading(true)
         try {
             const data = await getAllAppointments()
-            setAppointments(data)
+            // Filtrar solo las citas asignadas a este barbero
+            const myAppointments = data.filter(appt => {
+                const barberId = appt.barber?.id || appt.barberId;
+                return Number(barberId) === Number(user?.id);
+            });
+            setAppointments(myAppointments)
         } catch (error: any) {
             console.error('Error loading appointments:', error)
             let errorMessage = 'Error al cargar las citas'
@@ -77,10 +83,12 @@ export default function DashboardBarberPage() {
 
     return (
         <ProtectedRoute allowedRoles={[UserRole.Barber]}>
-            <div className="min-h-screen bg-black text-white p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-black text-white">
+                <Navbar menuItems={[]} />
+
+                <div className="p-6 max-w-7xl mx-auto pt-24">
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'var(--font-covered)' }}>
+                        <h1 className="text-4xl font-bold mb-2 mt-20" style={{ fontFamily: 'var(--font-covered)' }}>
                             MIS CITAS ASIGNADAS
                         </h1>
                         <p className="text-[#9ca3af] text-lg">
