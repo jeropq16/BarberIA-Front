@@ -38,6 +38,8 @@ export default function ChatBot() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    // Limpiar la imagen seleccionada para que no se vuelva a enviar en mensajes siguientes
+    setImage(null);
     setLoading(true);
 
     try {
@@ -94,7 +96,9 @@ ${data.confidenceLevel}`
   return (
     <>
       {/* BOTÓN FLOTANTE */}
-     <button className="chatbot-button" onClick={() => setIsOpen(!isOpen)} className="fixed bottom-6 right-6 
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="chatbot-button fixed bottom-6 right-6 
              w-16 h-16 
              rounded-full 
              bg-transparent 
@@ -102,15 +106,16 @@ ${data.confidenceLevel}`
              flex items-center justify-center
              hover:bg-red-600/10 
              transition-all duration-300
-             shadow-lg">
-      <Image
-      src="/img/logo_blanco.png"
-      alt="Logo"
-      width={60}
-      height={60}
-      priority
-  />
-</button>
+             shadow-lg"
+      >
+        <Image
+          src="/img/logo_blanco.png"
+          alt="Logo"
+          width={60}
+          height={60}
+          priority
+        />
+      </button>
 
 
       {isOpen && (
@@ -132,7 +137,7 @@ ${data.confidenceLevel}`
               >
                 {msg.text}
                 {msg.imageUrl && (
-                  <Image
+                  <img
                     src={msg.imageUrl}
                     alt="imagen"
                     style={{
@@ -172,7 +177,7 @@ ${data.confidenceLevel}`
 
             <button onClick={sendMessage}>Enviar</button>
           </div>
-          
+
         </div>
       )}
     </>

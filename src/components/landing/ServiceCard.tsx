@@ -57,7 +57,7 @@ export default function ServiceCard({
     <CardContent className="p-6 flex flex-col h-full">
       {/* NOMBRE */}
       <h3
-        className="text-2xl text-white mb-2 tracking-wide"
+        className="text-2xl text-white mb-2 tracking-wide mt-10"
         style={{ fontFamily: 'var(--font-Covered_By_Your_Grace), cursive' }}
       >
         {haircut.name}

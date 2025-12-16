@@ -59,7 +59,7 @@ export default function BarberCard({
                         fallback={barber.fullName.charAt(0).toUpperCase()}
                         className="mb-4"
                     />
-                    <h3 className="text-2xl text-white mb-1 tracking-wide" style={{ fontFamily: 'var(--font-qwigley), cursive' }}>
+                    <h3 className="text-2xl text-white mb-1 tracking-wide" style={{ fontFamily: 'var(--font-Covered_By_Your_Grace), cursive' }}>
                         {barber.fullName}
                     </h3>
                     <p className="text-sm text-[#dc2626] font-medium">
