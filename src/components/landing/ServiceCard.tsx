@@ -54,7 +54,7 @@ export default function ServiceCard({
     ${className}
   `}
   >
-    <CardContent className="p-6 flex flex-col h-full">
+    <CardContent className="p-6 flex flex-col h-full mb-5">
       {/* NOMBRE */}
       <h3
         className="text-2xl text-white mb-2 tracking-wide mt-10"

@@ -20,7 +20,7 @@ export default function ServicesAutoSlider({ haircuts, onSelect }: Props) {
       x: ['0%', '-50%'],
       transition: {
         ease: 'linear',
-        duration: 90, // ⏳ velocidad (ajústala)
+        duration: 30, // ⏳ velocidad (más rápido)
         repeat: Infinity,
       },
     })
@@ -29,20 +29,20 @@ export default function ServicesAutoSlider({ haircuts, onSelect }: Props) {
   return (
     <div className="overflow-hidden relative">
       <motion.div
-        className="flex gap-6"
+        className="flex gap-8"
         animate={controls}
       >
         {items.map((haircut, index) => (
           <div
             key={`${haircut.id}-${index}`}
-            className="min-w-[300px] max-w-[300px] flex-shrink-0"
+            className="min-w-[320px] md:min-w-[360px] lg:min-w-[380px] max-w-[380px] flex-shrink-0"
             onMouseEnter={() => controls.stop()}     //pausa
             onMouseLeave={() =>
               controls.start({
                 x: ['0%', '-50%'],
                 transition: {
                   ease: 'linear',
-                  duration: 90,
+                  duration: 30,
                   repeat: Infinity,
                 },
               })
