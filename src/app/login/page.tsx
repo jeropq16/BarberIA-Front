@@ -172,11 +172,11 @@ export default function LoginPage() {
           backdropFilter: "blur(8px)",
         }}
       > 
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-0">
           <Image src="/img/logo_blanco.png" alt="Logo" width={120} height={120} priority  className="mx-auto mb-6"/>
         </div>
 
-        <h1 className="text-center text-red-500 text-2xl font-bold mb-4">
+        <h1 className="text-center text-white-700 text-3xl font-bold mb-8 mt-0">
           Iniciar sesión
         </h1>
 

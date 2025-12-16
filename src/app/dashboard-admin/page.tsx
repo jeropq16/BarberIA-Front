@@ -100,7 +100,7 @@ export default function DashboardAdminPage() {
 
                 <div className="p-6 max-w-7xl mx-auto pt-24">
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'var(--font-covered)' }}>
+                        <h1 className="text-4xl font-bold mb-2 mt-20" style={{ fontFamily: 'var(--font-covered)' }}>
                             ADMINISTRACIÓN DE CITAS
                         </h1>
                         <p className="text-[#9ca3af] text-lg">

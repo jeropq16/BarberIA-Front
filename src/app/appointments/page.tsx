@@ -82,7 +82,7 @@ export default function AppointmentsPage() {
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'var(--font-covered)' }}>
+                        <h1 className="text-4xl font-bold mb-2 mt-20" style={{ fontFamily: 'var(--font-covered)' }}>
                             GESTIÓN DE CITAS
                         </h1>
                         <p className="text-[#9ca3af] text-lg">
