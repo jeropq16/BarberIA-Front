@@ -1,5 +1,6 @@
 'use client'
 
+import Navbar from '@/components/landing/Navbar'
 import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/ui/Loading'
@@ -14,8 +15,11 @@ import { getAllAppointments, AppointmentResponse } from '@/services/appointments
 import { useAuth } from '@/context/AuthContext'
 import { UserRole } from '@/helpers/auth'
 import { showErrorAlert } from '@/helpers/alerts'
+import { createStaff, CreateStaffRequest } from '@/services/users'
+import { showToast } from '@/helpers/toast'
+import { useForm } from 'react-hook-form'
 
-type ViewMode = 'table' | 'calendar' | 'cards'
+type ViewMode = 'table' | 'calendar' | 'cards' | 'users'
 
 export default function DashboardAdminPage() {
     const { user, isLoading: authLoading } = useAuth()
@@ -25,6 +29,9 @@ export default function DashboardAdminPage() {
     const [editingAppointment, setEditingAppointment] = useState<AppointmentResponse | null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+
+    // Estados para gestión de personal
+    const [isCreateStaffModalOpen, setIsCreateStaffModalOpen] = useState(false)
 
     const loadAppointments = async () => {
         setLoading(true)
@@ -56,13 +63,11 @@ export default function DashboardAdminPage() {
     useEffect(() => {
         // Esperar a que termine la carga de autenticación
         if (authLoading) return
-        
+
         // Si hay usuario, cargar citas
         if (user) {
             loadAppointments()
         } else {
-            // Si no hay usuario después de cargar, puede ser que el token sea inválido
-            // El ProtectedRoute debería redirigir, pero por si acaso mostramos un mensaje
             setLoading(false)
         }
     }, [user, authLoading])
@@ -87,8 +92,13 @@ export default function DashboardAdminPage() {
 
     return (
         <ProtectedRoute allowedRoles={[UserRole.Admin]}>
-            <div className="min-h-screen bg-black text-white p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-black text-white">
+                {/* Navbar para Admin */}
+                <Navbar
+                    menuItems={[]}
+                />
+
+                <div className="p-6 max-w-7xl mx-auto pt-24">
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'var(--font-covered)' }}>
                             ADMINISTRACIÓN DE CITAS
@@ -119,12 +129,20 @@ export default function DashboardAdminPage() {
                                 Tarjetas
                             </Button>
                         </div>
-                        <Button
-                            variant="primary"
-                            onClick={() => setIsCreateModalOpen(true)}
-                        >
-                            + Nueva Cita
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsCreateStaffModalOpen(true)}
+                            >
+                                + Registrar Personal
+                            </Button>
+                            <Button
+                                variant="primary"
+                                onClick={() => setIsCreateModalOpen(true)}
+                            >
+                                + Nueva Cita
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="mt-6">
@@ -219,8 +237,81 @@ export default function DashboardAdminPage() {
                         />
                     )}
                 </Modal>
+
+                {/* Modal para crear staff */}
+                <Modal
+                    isOpen={isCreateStaffModalOpen}
+                    onClose={() => setIsCreateStaffModalOpen(false)}
+                    title="Registrar Personal (Admin / Barbero)"
+                    size="md"
+                >
+                    <StaffRegistrationForm
+                        onSuccess={() => setIsCreateStaffModalOpen(false)}
+                        onCancel={() => setIsCreateStaffModalOpen(false)}
+                    />
+                </Modal>
             </div>
         </ProtectedRoute>
+    )
+}
+
+function StaffRegistrationForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
+    const { register, handleSubmit, formState: { errors } } = useForm<CreateStaffRequest>()
+    const [isLoading, setIsLoading] = useState(false)
+
+    const onSubmit = async (data: CreateStaffRequest) => {
+        setIsLoading(true)
+        try {
+            await createStaff(data)
+            showToast.success(`Usuario ${data.role} creado exitosamente`)
+            onSuccess()
+        } catch (error: any) {
+            console.error(error)
+            const msg = error.response?.data?.message || "Error al crear staff"
+            showToast.error(msg)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Nombre Completo</label>
+                <input
+                    {...register("fullName", { required: "El nombre es requerido" })}
+                    className="w-full p-2 rounded bg-[#1a1a1a] border border-[#333] text-white focus:border-red-500 outline-none transition-colors"
+                />
+                {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input
+                    type="email"
+                    {...register("email", { required: "El email es requerido" })}
+                    className="w-full p-2 rounded bg-[#1a1a1a] border border-[#333] text-white focus:border-red-500 outline-none transition-colors"
+                />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Rol</label>
+                <select
+                    {...register("role", { required: "El rol es requerido" })}
+                    className="w-full p-2 rounded bg-[#1a1a1a] border border-[#333] text-white focus:border-red-500 outline-none transition-colors"
+                >
+                    <option value="Barber">Barbero</option>
+                    <option value="Admin">Administrador</option>
+                </select>
+                {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" type="button" onClick={onCancel}>Cancelar</Button>
+                <Button variant="primary" type="submit" isLoading={isLoading} disabled={isLoading}>Registrar</Button>
+            </div>
+        </form>
     )
 }
 

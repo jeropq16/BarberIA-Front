@@ -157,3 +157,31 @@ export const uploadUserPhoto = async (id: number, file: File): Promise<string> =
     }
 };
 
+/**
+ * Interfaz para crear staff (Barber o Admin)
+ */
+export interface CreateStaffRequest {
+    fullName: string;
+    email: string;
+    role: "Barber" | "Admin" | "Client";
+}
+
+/**
+ * Servicio: Crear un usuario staff (Admin o Barbero)
+ * Público - No requiere autenticación según la lógica de negocio (pero debería estar protegido)
+ */
+export const createStaff = async (data: CreateStaffRequest): Promise<void> => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
+        }
+        await axios.post(`${apiUrl}/users/create-staff`, data);
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw error;
+        }
+        throw new Error('Error desconocido al crear staff');
+    }
+};
+
