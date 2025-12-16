@@ -14,7 +14,7 @@ import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/helpers/toast'
 
 export default function ProfilePage() {
-    const { user, refreshUser } = useAuth()
+    const { user, refreshUser, isLoading: authLoading } = useAuth()
     const [profile, setProfile] = useState<UserProfileResponse | null>(null)
     const [loading, setLoading] = useState(true)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -39,15 +39,22 @@ export default function ProfilePage() {
             } catch (error) {
                 console.error('Error loading profile:', error)
                 showToast.error('Error al cargar el perfil')
+                // No establecer profile como null, para que el usuario pueda ver algo
             } finally {
                 setLoading(false)
             }
         }
 
-        if (user) {
-            loadProfile()
+        // Esperar a que la autenticación termine de cargar
+        if (!authLoading) {
+            if (user) {
+                loadProfile()
+            } else {
+                // Si no hay usuario después de que termine la carga, establecer loading como false
+                setLoading(false)
+            }
         }
-    }, [user])
+    }, [user, authLoading])
 
     // Abrir modal de edición
     const handleOpenEditModal = () => {
@@ -139,7 +146,7 @@ export default function ProfilePage() {
         }
     }
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <Loading />
@@ -148,7 +155,46 @@ export default function ProfilePage() {
     }
 
     if (!profile) {
-        return null
+        return (
+            <ProtectedRoute>
+                <div className="min-h-screen bg-black pt-24 pb-12 px-4">
+                    <div className="max-w-4xl mx-auto">
+                        <Card variant="elevated">
+                            <CardContent>
+                                <div className="text-center py-8">
+                                    <p className="text-white text-lg mb-4">
+                                        No se pudo cargar el perfil
+                                    </p>
+                                    <Button
+                                        onClick={() => {
+                                            setLoading(true)
+                                            getUserProfile()
+                                                .then((userProfile) => {
+                                                    setProfile(userProfile)
+                                                    setEditForm({
+                                                        fullName: userProfile.fullName,
+                                                        phoneNumber: userProfile.phoneNumber || '',
+                                                    })
+                                                })
+                                                .catch((error) => {
+                                                    console.error('Error loading profile:', error)
+                                                    showToast.error('Error al cargar el perfil')
+                                                })
+                                                .finally(() => {
+                                                    setLoading(false)
+                                                })
+                                        }}
+                                        variant="primary"
+                                    >
+                                        Reintentar
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </ProtectedRoute>
+        )
     }
 
     return (
@@ -286,9 +332,9 @@ export default function ProfilePage() {
                         <Input
                             label="Teléfono"
                             type="tel"
-                            value={editForm.phoneNumber}
+                            value={editForm.phoneNumber ?? ''}
                             onChange={(e) =>
-                                setEditForm({ ...editForm, phoneNumber: e.target.value })
+                                setEditForm({ ...editForm, phoneNumber: e.target.value || null })
                             }
                             placeholder="+34 123 456 789"
                             helperText="Opcional"
