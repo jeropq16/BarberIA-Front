@@ -74,6 +74,22 @@ export default function Navbar({
         )
     }
 
+    const getRoleLabel = (role: number | string | undefined): string => {
+        if (role === undefined || role === null) return 'Usuario'
+        const numericRole = typeof role === 'string' ? parseInt(role, 10) : Number(role)
+
+        switch (numericRole) {
+            case 1:
+                return 'Cliente'
+            case 2:
+                return 'Barbero'
+            case 3:
+                return 'Administrador'
+            default:
+                return 'Usuario'
+        }
+    }
+
     return (
         <nav className={styles.navbar}>
             <div className={styles.container}>
@@ -137,6 +153,7 @@ export default function Navbar({
                                     <div className={styles.userDropdown}>
                                         <div className={styles.userDropdownHeader}>
                                             <p className={styles.userName}>{user.fullName}</p>
+                                            <p className={styles.userRole}>{getRoleLabel(user.role)}</p>
                                             <p className={styles.userEmail}>{user.email}</p>
                                         </div>
                                         <div className={styles.userDropdownDivider} />
