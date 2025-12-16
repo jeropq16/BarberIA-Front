@@ -88,7 +88,7 @@ export default function RegisterPage() {
         }}
       >
         <div className="flex justify-center mb-4">
-          <Image src="/logo blanco.png" alt="Logo" width={140} height={140} priority />
+          <Image src="/img/logo_blanco.png" alt="Logo" width={140} height={140} priority />
         </div>
 
         <h1 className="text-center text-red-500 text-2xl font-bold mb-4">

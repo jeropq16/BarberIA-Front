@@ -108,7 +108,7 @@ ${data.analysisReport}
 
 
       {isOpen && (
-        <div className="chatbot-window fixed bottom-24 right-6 w-[450px] max-w-[90vw] h-[600px] bg-[#121212] border border-[#333] rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden font-sans">
+        <div className="chatbot-window fixed bottom-24 right-6 w-[450px] max-w-[90vw] h-[600px] bg-transparent backdrop-blur-md border-2 border-red-600 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden font-sans">
           {/* HEADER */}
           <div className="chatbot-header p-4 border-b border-[#333] flex justify-between items-center bg-gradient-to-r from-[#1a1a1a] to-[#252525]">
             <div className="flex items-center gap-3">

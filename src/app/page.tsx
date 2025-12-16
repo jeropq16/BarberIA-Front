@@ -183,13 +183,13 @@ export default function Home() {
                 DIRECCIÓN
               </h3>
               <p className="text-[#9ca3af] text-sm">
-                Calle Falsa 123, Barrio Centro, Ciudad.
+                Cl. 103 #74-12, Pedregal, Medellín.
               </p>
               <p className="text-[#9ca3af] text-sm">
-                Lunes a sábado de 10:00 a 20:00.
+                Todos los dias de 10:00 a 20:00.
               </p>
               <a
-                href="https://www.google.com/maps"
+                href="https://www.google.com/maps/place/Ghetto+Barber/@6.3005352,-75.5759397,17z/data=!3m1!4b1!4m6!3m5!1s0x8e442f740457e329:0x966d2aa89f3a6b15!8m2!3d6.3005352!4d-75.5733648!16s%2Fg%2F11v0vx7q5t?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoKLDEwMDc5MjA2OUgBUAM%3D"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 inline-flex items-center justify-center px-4 py-2 rounded-lg border border-[#2a2a2a] text-sm text-white hover:bg-[#111111] transition-colors"
