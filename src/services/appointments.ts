@@ -63,6 +63,7 @@ export interface CreateAppointmentRequest {
     clientId: number;
     barberId: number;
     hairCutId: number; // Nota: el backend usa "hairCutId" (camelCase)
+    haircutId?: number;
     startTime: string; // ISO 8601 format: "2025-12-15T20:04:42.784Z"
 }
 
@@ -287,16 +288,18 @@ export const createAppointment = async (
             clientId: Number(clientId), // Asegurar que sea número
             barberId: formData.barberId,
             hairCutId: formData.haircutId,
+            haircutId: formData.haircutId, // Enviar ambas variantes
             startTime: formattedStartTime,
         };
 
-        const response = await axios.post<AppointmentResponse>(
-            `${apiUrl}/appointments`,
+        const response = await authenticatedAxios.post<AppointmentResponse>(
+            '/appointments',
             requestData
         );
         return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
+    } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+            console.error('❌ Error Backend createAppointment:', error.response.data);
             throw error;
         }
         throw new Error('Error desconocido al crear la cita');

@@ -10,6 +10,7 @@ import { getAvailability, createAppointment, updateAppointment, CreateAppointmen
 import { UserRole } from '@/helpers/auth'
 import { showToast } from '@/helpers/toast'
 import { showErrorAlert } from '@/helpers/alerts'
+import { useAuth } from '@/context/AuthContext'
 
 interface AppointmentFormProps {
     appointment?: AppointmentResponse
@@ -24,6 +25,7 @@ export default function AppointmentForm({
     onCancel,
     userRole = UserRole.Client,
 }: AppointmentFormProps) {
+    const { user } = useAuth()
     const isEditing = !!appointment
 
     // Estados del formulario
@@ -237,23 +239,16 @@ export default function AppointmentForm({
                 await updateAppointment(appointment.id, updateData)
                 showToast.success('Cita actualizada correctamente')
             } else {
-                // Obtener el clientId del usuario autenticado
-                const storedUser = localStorage.getItem('user')
-                if (!storedUser) {
+                // Obtener el clientId del usuario autenticado desde el contexto
+                if (!user || !user.id) {
                     showErrorAlert('Error', 'No se encontró información del usuario. Por favor, inicia sesión nuevamente.')
                     setLoading(false)
                     return
                 }
 
-                let clientId: number
-                try {
-                    const user = JSON.parse(storedUser)
-                    clientId = user.id
-                    if (!clientId || clientId <= 0) {
-                        throw new Error('ID de usuario inválido')
-                    }
-                } catch (error) {
-                    showErrorAlert('Error', 'No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.')
+                const clientId = Number(user.id)
+                if (clientId <= 0) {
+                    showErrorAlert('Error', 'ID de usuario inválido')
                     setLoading(false)
                     return
                 }
