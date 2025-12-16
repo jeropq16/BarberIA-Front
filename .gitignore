@@ -1,41 +1,74 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# =========================
+# Dependencias
+# =========================
+node_modules/
+.pnp
+.pnp.js
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# =========================
+# Builds
+# =========================
+.next/
+out/
+dist/
+build/
 
-# testing
-/coverage
+# =========================
+# Producción
+# =========================
+.vercel/
 
-# next.js
-/.next/
-/out/
+# =========================
+# Variables de entorno
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# =========================
+# Logs
+# =========================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# =========================
+# Coverage / Tests
+# =========================
+coverage/
+*.lcov
 
-# vercel
-.vercel
-
-# typescript
+# =========================
+# TypeScript
+# =========================
 *.tsbuildinfo
-next-env.d.ts
+
+# =========================
+# Cache
+# =========================
+.cache/
+.turbo/
+.eslintcache
+
+# =========================
+# Sistema operativo
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDEs / Editores
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+
+# =========================
+# Misc
+# =========================
+*.log
