@@ -28,7 +28,7 @@ export default function Navbar({
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
     const userMenuRef = useRef<HTMLDivElement>(null)
-    
+
     // Logo blanco para navbar (fondo oscuro siempre)
     const logoPath = logo || '/logo blanco.png'
 
@@ -140,6 +140,18 @@ export default function Navbar({
                                             <p className={styles.userEmail}>{user.email}</p>
                                         </div>
                                         <div className={styles.userDropdownDivider} />
+                                        <button
+                                            onClick={() => {
+                                                setIsUserMenuOpen(false)
+                                                // Redirigir según el rol
+                                                if (user.role === 3) router.push('/dashboard-admin')
+                                                else if (user.role === 2) router.push('/dashboard-barber')
+                                                else router.push('/dashboard-client')
+                                            }}
+                                            className={styles.userDropdownItem}
+                                        >
+                                            Mi Dashboard
+                                        </button>
                                         <button
                                             onClick={handleProfileClick}
                                             className={styles.userDropdownItem}
