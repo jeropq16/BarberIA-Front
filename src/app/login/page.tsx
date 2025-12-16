@@ -50,10 +50,13 @@ export default function LoginPage() {
         return;
       }
 
-      await login(result.token);
+      // Llamar login - no esperar a que termine porque redirige
+      login(result.token).catch((error: any) => {
+        setError(error?.message || "Error al iniciar sesión");
+        setLoading(false);
+      });
     } catch (error: any) {
       setError(error?.message || "Error al conectar con el servidor");
-    } finally {
       setLoading(false);
     }
   };

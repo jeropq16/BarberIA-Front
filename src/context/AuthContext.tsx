@@ -38,28 +38,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const loadUser = async () => {
             try {
                 const token = getToken()
-                if (token && isAuthenticated()) {
-                    const userData = getUserFromToken()
-                    if (userData) {
-                        // Intentar cargar perfil completo del servidor
-                        try {
-                            const profile = await getUserProfile()
-                            setUser({
-                                ...userData,
-                                profile,
-                            })
-                        } catch (error) {
-                            // Si falla, usar solo datos del token
-                            console.warn('No se pudo cargar perfil completo, usando datos del token')
-                            setUser(userData)
-                        }
+                console.log('🔍 AuthContext - Cargando usuario, token existe:', !!token)
+                
+                if (!token) {
+                    console.log('⚠️ AuthContext - No hay token, estableciendo isLoading=false')
+                    setIsLoading(false)
+                    return
+                }
+                
+                // Decodificar el token directamente sin usar isAuthenticated()
+                const userData = getUserFromToken()
+                console.log('🔍 AuthContext - Datos decodificados del token:', userData)
+                
+                if (userData) {
+                    // Establecer los datos del token inmediatamente
+                    const userSession = {
+                        ...userData,
+                        profile: null,
                     }
+                    console.log('✅ AuthContext - Estableciendo usuario:', userSession)
+                    setUser(userSession)
+                    
+                    // Intentar cargar perfil completo del servidor en segundo plano
+                    getUserProfile()
+                        .then(profile => {
+                            console.log('✅ AuthContext - Perfil cargado del servidor:', profile)
+                            setUser(prev => prev ? { ...prev, profile } : null)
+                        })
+                        .catch((error) => {
+                            console.warn('⚠️ AuthContext - No se pudo cargar perfil completo:', error)
+                            // Si falla, el usuario ya tiene los datos del token
+                        })
+                } else {
+                    console.error('❌ AuthContext - No se pudo decodificar el token, limpiando')
+                    localStorage.removeItem(TOKEN_KEY)
                 }
             } catch (error) {
-                console.error('Error loading user session:', error)
-                // Limpiar token inválido
+                console.error('❌ AuthContext - Error loading user session:', error)
                 localStorage.removeItem(TOKEN_KEY)
             } finally {
+                console.log('✅ AuthContext - Finalizando carga, estableciendo isLoading=false')
                 setIsLoading(false)
             }
         }
@@ -96,6 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      * Login - Guardar token y cargar datos del usuario
      */
     const login = async (token: string) => {
+        let redirectPath = '/'
+        
         try {
             localStorage.setItem(TOKEN_KEY, token)
             
@@ -104,47 +124,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error('Error al decodificar el token')
             }
 
-            // Intentar cargar perfil completo
-            let profile: UserProfileResponse | null = null
-            try {
-                profile = await getUserProfile()
-            } catch (error) {
-                console.warn('No se pudo cargar perfil completo en login')
+            // Determinar ruta de redirección según el rol
+            let roleValue: number
+            if (typeof userData.role === 'string') {
+                roleValue = parseInt(userData.role, 10)
+            } else {
+                roleValue = Number(userData.role)
+            }
+            
+            const roleStr = String(userData.role)
+            if (roleValue === 1 || roleValue === UserRole.Client || roleStr === '1') {
+                redirectPath = '/appointments'
+            } else if (roleValue === 2 || roleValue === UserRole.Barber || roleStr === '2') {
+                redirectPath = '/dashboard-barber'
+            } else if (roleValue === 3 || roleValue === UserRole.Admin || roleStr === '3') {
+                redirectPath = '/dashboard-admin'
             }
 
             setUser({
                 ...userData,
-                profile,
+                profile: null,
             })
 
-            showToast.success(`Bienvenido, ${userData.fullName}!`, { autoClose: 2000 })
-
-            // Redirigir según el rol
-            let redirectPath = '/'
-            if (userData.role === UserRole.Client) {
-                redirectPath = '/appointments'
-            } else if (userData.role === UserRole.Barber) {
-                redirectPath = '/dashboard-barber'
-            } else if (userData.role === UserRole.Admin) {
-                redirectPath = '/dashboard-admin'
-            }
-
-            // Redirigir después de un pequeño delay para que el estado se actualice
-            setTimeout(() => {
-                try {
-                    router.push(redirectPath)
-                } catch (err) {
-                    // Fallback si router.push falla
-                    if (typeof window !== 'undefined') {
-                        window.location.href = redirectPath
-                    }
-                }
-            }, 300)
         } catch (error) {
             console.error('Error saving user session:', error)
             showToast.error('Error al iniciar sesión')
             throw error
         }
+
+        if (typeof window !== 'undefined') {
+            window.location.href = redirectPath
+        }
+
+        // Intentar cargar perfil completo en segundo plano (no bloquea la redirección)
+        getUserProfile()
+            .then(profile => {
+                setUser(prev => prev ? { ...prev, profile } : null)
+            })
+            .catch(() => {
+                // Si falla, el usuario ya tiene los datos del token
+            })
     }
 
     /**

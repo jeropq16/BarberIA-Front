@@ -40,11 +40,27 @@ export const decodeToken = (token: string): DecodedToken | null => {
 
         const decoded = JSON.parse(jsonPayload);
 
+        const roleClaim = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+        const emailClaim = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
+        const nameIdentifierClaim = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
+        
+        let roleValue = decoded[roleClaim] || decoded.role || decoded.Role || decoded.roleid || decoded.RoleId || decoded.roleId || decoded.userRole || decoded.UserRole;
+        
+        if (typeof roleValue === 'string') {
+            if (roleValue.toLowerCase() === 'admin') {
+                roleValue = 3;
+            } else if (roleValue.toLowerCase() === 'barber' || roleValue.toLowerCase() === 'barbero') {
+                roleValue = 2;
+            } else if (roleValue.toLowerCase() === 'client' || roleValue.toLowerCase() === 'cliente') {
+                roleValue = 1;
+            }
+        }
+
         return {
-            id: decoded.nameid || decoded.id || decoded.userId || decoded.sub,
-            email: decoded.email || decoded.Email,
-            role: decoded.role || decoded.Role || decoded.roleid,
-            fullName: decoded.fullName || decoded.FullName || decoded.name || decoded.unique_name,
+            id: decoded.nameid || decoded[nameIdentifierClaim] || decoded.id || decoded.userId || decoded.sub,
+            email: decoded.email || decoded[emailClaim] || decoded.Email || decoded.EmailAddress,
+            role: roleValue,
+            fullName: decoded.fullName || decoded.FullName || decoded.name || decoded.unique_name || decoded.Name,
         };
     } catch (error) {
         console.error('Error decoding token:', error);

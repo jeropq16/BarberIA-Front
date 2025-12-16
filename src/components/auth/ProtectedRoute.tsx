@@ -28,25 +28,40 @@ export default function ProtectedRoute({
     const router = useRouter()
 
     useEffect(() => {
-        if (!isLoading) {
-            // Si no está autenticado, redirigir al login
-            if (!isAuthenticated) {
-                router.push(redirectTo)
-                return
-            }
+        if (isLoading) return
 
-            // Si hay roles permitidos, verificar que el usuario tenga uno de esos roles
-            if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+        // Si no está autenticado, redirigir al login
+        if (!isAuthenticated || !user) {
+            if (typeof window !== 'undefined') {
+                window.location.href = redirectTo
+            }
+            return
+        }
+
+        // Si hay roles permitidos, verificar que el usuario tenga uno de esos roles
+        if (allowedRoles && allowedRoles.length > 0 && user) {
+            const userRole = Number(user.role)
+            // Comparar tanto el valor numérico del enum como el número directo
+            const hasAllowedRole = allowedRoles.some(role => {
+                const roleValue = typeof role === 'number' ? role : Number(role)
+                return roleValue === userRole || role === userRole || Number(role) === userRole
+            })
+            
+            if (!hasAllowedRole) {
                 // Redirigir según el rol del usuario
-                if (user.role === UserRole.Client) {
-                    router.push('/appointments')
-                } else if (user.role === UserRole.Barber) {
-                    router.push('/dashboard-barber')
-                } else if (user.role === UserRole.Admin) {
-                    router.push('/dashboard-admin')
-                } else {
-                    router.push('/')
+                let redirectPath = '/'
+                if (userRole === 1 || userRole === UserRole.Client) {
+                    redirectPath = '/appointments'
+                } else if (userRole === 2 || userRole === UserRole.Barber) {
+                    redirectPath = '/dashboard-barber'
+                } else if (userRole === 3 || userRole === UserRole.Admin) {
+                    redirectPath = '/dashboard-admin'
                 }
+                
+                if (typeof window !== 'undefined' && window.location.pathname !== redirectPath) {
+                    window.location.href = redirectPath
+                }
+                return
             }
         }
     }, [isAuthenticated, isLoading, user, allowedRoles, redirectTo, router])
@@ -66,8 +81,16 @@ export default function ProtectedRoute({
     }
 
     // Si hay roles permitidos y el usuario no tiene uno de esos roles, no mostrar nada
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        return null
+    if (allowedRoles && allowedRoles.length > 0 && user) {
+        const userRole = Number(user.role)
+        const hasAllowedRole = allowedRoles.some(role => {
+            const roleValue = typeof role === 'number' ? role : Number(role)
+            return roleValue === userRole || role === userRole || Number(role) === userRole
+        })
+        
+        if (!hasAllowedRole) {
+            return null
+        }
     }
 
     // Usuario autenticado y con rol permitido, mostrar contenido

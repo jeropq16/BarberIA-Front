@@ -4,12 +4,14 @@ import { useState, useMemo } from 'react'
 import Card from '../ui/Card'
 import AppointmentCard from './AppointmentCard'
 import { AppointmentResponse } from '@/services/appointments'
+import { UserRole } from '@/helpers/auth'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 
 interface AppointmentCalendarProps {
     appointments: AppointmentResponse[]
-    userRole?: number // 1=Client, 2=Barber, 3=Admin
+    userRole?: UserRole
+    userId?: number
     onRefresh: () => void
     onEdit?: (appointment: AppointmentResponse) => void
     view?: 'month' | 'week' | 'day'
@@ -17,7 +19,8 @@ interface AppointmentCalendarProps {
 
 export default function AppointmentCalendar({
     appointments,
-    userRole = 1,
+    userRole = UserRole.Client,
+    userId,
     onRefresh,
     onEdit,
     view: initialView = 'month',
@@ -189,6 +192,7 @@ export default function AppointmentCalendar({
                                             key={appointment.id}
                                             appointment={appointment}
                                             userRole={userRole}
+                                            userId={userId}
                                             onRefresh={onRefresh}
                                             onEdit={onEdit}
                                         />
@@ -308,6 +312,7 @@ export default function AppointmentCalendar({
                                 key={appointment.id}
                                 appointment={appointment}
                                 userRole={userRole}
+                                userId={userId}
                                 onRefresh={onRefresh}
                                 onEdit={onEdit}
                             />

@@ -97,12 +97,40 @@ export interface UpdatePaymentStatusRequest {
  */
 export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
-        }
-        const response = await axios.get<AppointmentResponse[]>(`${apiUrl}/appointments/all`);
-        return response.data;
+        const response = await authenticatedAxios.get<any[]>('/appointments/all');
+        
+        // Transformar la respuesta del backend: convertir startTime a appointmentDate y appointmentTime
+        const transformedAppointments: AppointmentResponse[] = response.data.map((appointment: any) => {
+            let appointmentDate = appointment.appointmentDate || '';
+            let appointmentTime = appointment.appointmentTime || '';
+            
+            // Si el backend devuelve startTime, extraer fecha y hora
+            if (appointment.startTime || appointment.StartTime) {
+                const startTime = appointment.startTime || appointment.StartTime;
+                const dateObj = new Date(startTime);
+                
+                if (!isNaN(dateObj.getTime())) {
+                    // Extraer fecha en formato YYYY-MM-DD
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    appointmentDate = `${year}-${month}-${day}`;
+                    
+                    // Extraer hora en formato HH:mm
+                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    appointmentTime = `${hours}:${minutes}`;
+                }
+            }
+            
+            return {
+                ...appointment,
+                appointmentDate,
+                appointmentTime,
+            } as AppointmentResponse;
+        });
+        
+        return transformedAppointments;
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw error;
@@ -111,29 +139,14 @@ export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
     }
 };
 
-/**
- * Servicio: Obtener una cita por ID
- * Nota: Verificar si este endpoint requiere autenticación según el backend
- */
-export const getAppointmentById = async (id: number): Promise<AppointmentResponse> => {
-    try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
-        }
-        const response = await axios.get<AppointmentResponse>(`${apiUrl}/appointments/${id}`);
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            throw error;
-        }
-        throw new Error('Error desconocido al obtener la cita');
-    }
-};
 
 /**
  * Servicio: Crear una nueva cita
  * Transforma los datos del formulario al formato que espera el backend
+ */
+/**
+ * Servicio: Crear una nueva cita
+ * Público - No requiere autenticación según la lógica de negocio
  */
 export const createAppointment = async (
     formData: CreateAppointmentFormData,
@@ -145,18 +158,36 @@ export const createAppointment = async (
             throw new Error('NEXT_PUBLIC_API_URL no está configurado');
         }
 
-        // Combinar fecha y hora en formato ISO
-        const dateTime = new Date(`${formData.appointmentDate}T${formData.appointmentTime}:00`);
+        // Construir la fecha y hora en formato ISO 8601 sin milisegundos ni Z
+        // Formato esperado: "2024-12-25T10:00:00"
+        const dateTimeString = `${formData.appointmentDate}T${formData.appointmentTime}:00`;
+        const dateTime = new Date(dateTimeString);
         if (isNaN(dateTime.getTime())) {
             throw new Error('Fecha y hora inválidas');
         }
 
-        // Preparar datos en el formato que espera el backend
-        const requestData: CreateAppointmentRequest = {
-            clientId: clientId,
+        // Formatear como YYYY-MM-DDTHH:mm:ss (sin milisegundos ni Z)
+        const year = dateTime.getFullYear();
+        const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+        const day = String(dateTime.getDate()).padStart(2, '0');
+        const hours = String(dateTime.getHours()).padStart(2, '0');
+        const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+        const seconds = String(dateTime.getSeconds()).padStart(2, '0');
+        const formattedStartTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+
+        console.log('🔍 createAppointment - Datos a enviar:', {
+            clientId: Number(clientId),
             barberId: formData.barberId,
-            hairCutId: formData.haircutId, // El backend espera "hairCutId"
-            startTime: dateTime.toISOString(),
+            hairCutId: formData.haircutId,
+            startTime: formattedStartTime,
+            dateTimeString,
+        });
+
+        const requestData: CreateAppointmentRequest = {
+            clientId: Number(clientId), // Asegurar que sea número
+            barberId: formData.barberId,
+            hairCutId: formData.haircutId,
+            startTime: formattedStartTime,
         };
 
         const response = await axios.post<AppointmentResponse>(
@@ -174,19 +205,13 @@ export const createAppointment = async (
 
 /**
  * Servicio: Actualizar una cita
- * Transforma los datos del formulario al formato que espera el backend
+ * Requiere autenticación - OwnerOrAdmin policy
  */
 export const updateAppointment = async (
     id: number,
     formData: UpdateAppointmentFormData
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
-        }
-
-        // Preparar datos en el formato que espera el backend
         const requestData: UpdateAppointmentRequest = {};
 
         if (formData.barberId !== undefined) {
@@ -194,10 +219,9 @@ export const updateAppointment = async (
         }
 
         if (formData.haircutId !== undefined) {
-            requestData.hairCutId = formData.haircutId; // El backend espera "hairCutId"
+            requestData.hairCutId = formData.haircutId;
         }
 
-        // Si hay fecha y hora, combinarlas en formato ISO
         if (formData.appointmentDate && formData.appointmentTime) {
             const dateTime = new Date(`${formData.appointmentDate}T${formData.appointmentTime}:00`);
             if (!isNaN(dateTime.getTime())) {
@@ -205,8 +229,8 @@ export const updateAppointment = async (
             }
         }
 
-        const response = await axios.put<AppointmentResponse>(
-            `${apiUrl}/appointments/${id}`,
+        const response = await authenticatedAxios.put<AppointmentResponse>(
+            `/appointments/${id}`,
             requestData
         );
         return response.data;
@@ -224,11 +248,7 @@ export const updateAppointment = async (
  */
 export const cancelAppointment = async (id: number): Promise<void> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
-        }
-        await axios.delete(`${apiUrl}/appointments/${id}`);
+        await authenticatedAxios.delete(`/appointments/${id}`);
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw error;
@@ -243,12 +263,8 @@ export const cancelAppointment = async (id: number): Promise<void> => {
  */
 export const completeAppointment = async (id: number): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
-        }
-        const response = await axios.put<AppointmentResponse>(
-            `${apiUrl}/appointments/${id}/complete`
+        const response = await authenticatedAxios.put<AppointmentResponse>(
+            `/appointments/${id}/complete`
         );
         return response.data;
     } catch (error) {
@@ -268,13 +284,9 @@ export const updatePaymentStatus = async (
     data: UpdatePaymentStatusRequest
 ): Promise<AppointmentResponse> => {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            throw new Error('NEXT_PUBLIC_API_URL no está configurado');
-        }
-        const response = await axios.put<AppointmentResponse>(
-            `${apiUrl}/appointments/${id}/payment-status`,
-            data
+        const response = await authenticatedAxios.put<AppointmentResponse>(
+            `/appointments/payment-status`,
+            { appointmentId: id, ...data }
         );
         return response.data;
     } catch (error) {
@@ -294,6 +306,9 @@ export const getAvailability = async (
     date: string, // YYYY-MM-DD
     haircutId?: number // ID del servicio (opcional pero puede ser requerido por el backend)
 ): Promise<AvailabilityResponse> => {
+    // Validar y normalizar el formato de fecha (fuera del try para usarlo en el catch)
+    let normalizedDate = date.trim();
+    
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         if (!apiUrl) {
@@ -305,9 +320,8 @@ export const getAvailability = async (
             throw new Error('barberId inválido');
         }
 
-        // Validar y normalizar el formato de fecha
+        // Normalizar el formato de fecha
         // El backend espera YYYY/MM/DD (con slash) según Swagger
-        let normalizedDate = date.trim();
 
         // Si viene en formato YYYY-MM-DD, convertirlo a YYYY/MM/DD
         if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
@@ -354,23 +368,47 @@ export const getAvailability = async (
             params.haircutId = haircutId;
         }
 
-        const response = await axios.get<AvailabilityResponse>(
+        const response = await axios.get<any>(
             `${apiUrl}/appointments/availability`,
             {
                 params,
             }
         );
-        return response.data;
+        
+        // El backend devuelve un array de objetos con start y end
+        // Ejemplo: [{ start: '2025-12-16T09:00:00', end: '2025-12-16T09:25:00' }, ...]
+        let availableTimes: string[] = [];
+        
+        if (Array.isArray(response.data)) {
+            // Extraer hora directamente del string ISO
+            availableTimes = response.data.map((slot: any) => {
+                if (slot.start) {
+                    const isoString = slot.start;
+                    if (isoString.includes('T')) {
+                        const timePart = isoString.split('T')[1];
+                        const timeOnly = timePart.split(':').slice(0, 2).join(':');
+                        return timeOnly;
+                    }
+                    const startDate = new Date(slot.start);
+                    const hours = String(startDate.getUTCHours()).padStart(2, '0');
+                    const minutes = String(startDate.getUTCMinutes()).padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                }
+                return null;
+            }).filter((time: string | null) => time !== null) as string[];
+        } else if (response.data?.availableTimes && Array.isArray(response.data.availableTimes)) {
+            availableTimes = response.data.availableTimes;
+        }
+        
+        return {
+            date: normalizedDate,
+            availableTimes,
+        };
     } catch (error) {
         if (axios.isAxiosError(error)) {
             // Log detallado del error para debugging
             if (error.response?.status === 500) {
-                console.error('Error 500 del backend al obtener disponibilidad:', {
-                    barberId,
-                    date,
-                    response: error.response?.data,
-                    url: error.config?.url,
-                });
+                console.error('Error del servidor al obtener disponibilidad');
             }
             throw error;
         }
