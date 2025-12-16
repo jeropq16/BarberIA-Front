@@ -95,41 +95,141 @@ export interface UpdatePaymentStatusRequest {
  * Servicio: Obtener todas las citas
  * Requiere autenticación - El backend filtra por rol automáticamente
  */
+import { getHaircuts } from './haircuts';
+import { getUserById, UserProfileResponse } from './users';
+
+/**
+ * Servicio: Obtener todas las citas
+ * Requiere autenticación - El backend filtra por rol automáticamente
+ * NOTA: Realiza "hydration" manual de datos (Join en frontend) ya que el backend solo devuelve IDs.
+ */
 export const getAllAppointments = async (): Promise<AppointmentResponse[]> => {
     try {
+        // 1. Obtener las citas básicas (solo con IDs)
         const response = await authenticatedAxios.get<any[]>('/appointments/all');
-        
-        // Transformar la respuesta del backend: convertir startTime a appointmentDate y appointmentTime
-        const transformedAppointments: AppointmentResponse[] = response.data.map((appointment: any) => {
+        const rawAppointments = response.data;
+
+        // 2. Extraer IDs únicos para minimizar peticiones
+        const haircutIds = new Set<number>();
+        const userIds = new Set<number>();
+
+        rawAppointments.forEach((appt: any) => {
+            if (appt.haircutId || appt.HaircutId) haircutIds.add(appt.haircutId || appt.HaircutId);
+            if (appt.hairCutId || appt.HairCutId) haircutIds.add(appt.hairCutId || appt.HairCutId);
+
+            if (appt.clientId || appt.ClientId) userIds.add(appt.clientId || appt.ClientId);
+            if (appt.barberId || appt.BarberId) userIds.add(appt.barberId || appt.BarberId);
+        });
+
+        // 3. Cargar datos diccionarios en paralelo
+        const [haircutsList, usersList] = await Promise.all([
+            getHaircuts().catch(() => []), // Si falla, array vacío
+            Promise.all(Array.from(userIds).map(id => getUserById(id).catch(() => null)))
+        ]);
+
+        // Crear mapas para acceso rápido
+        const haircutMap = new Map(haircutsList.map(h => [h.id, h]));
+        const userMap = new Map(usersList.filter(u => u !== null).map(u => [u!.id, u]));
+
+        // 4. Transformar y enriquecer las citas
+        const transformedAppointments: AppointmentResponse[] = rawAppointments.map((appointment: any) => {
+            // Normalizar fechas (tu lógica existente)
             let appointmentDate = appointment.appointmentDate || '';
             let appointmentTime = appointment.appointmentTime || '';
-            
-            // Si el backend devuelve startTime, extraer fecha y hora
+
             if (appointment.startTime || appointment.StartTime) {
                 const startTime = appointment.startTime || appointment.StartTime;
                 const dateObj = new Date(startTime);
-                
+
                 if (!isNaN(dateObj.getTime())) {
-                    // Extraer fecha en formato YYYY-MM-DD
                     const year = dateObj.getFullYear();
                     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                     const day = String(dateObj.getDate()).padStart(2, '0');
                     appointmentDate = `${year}-${month}-${day}`;
-                    
-                    // Extraer hora en formato HH:mm
+
                     const hours = String(dateObj.getHours()).padStart(2, '0');
                     const minutes = String(dateObj.getMinutes()).padStart(2, '0');
                     appointmentTime = `${hours}:${minutes}`;
                 }
             }
-            
+
+            // Obtener IDs normalizados
+            const cId = appointment.clientId || appointment.ClientId || 0;
+            const bId = appointment.barberId || appointment.BarberId || 0;
+            const hId = appointment.haircutId || appointment.HaircutId || appointment.hairCutId || appointment.HairCutId || 0;
+
+            // Buscar objetos completos en los mapas cargados
+            // Prioridad: Objeto que ya venga del backend > Búsqueda en mapa > Fallback
+
+            // Cliente
+            let client = appointment.client || appointment.Client;
+            if (!client) {
+                const userClient = userMap.get(cId);
+                if (userClient) {
+                    client = {
+                        id: userClient.id,
+                        fullName: userClient.fullName,
+                        email: userClient.email,
+                    };
+                } else if (appointment.clientName) {
+                    client = { id: cId, fullName: appointment.clientName, email: '' };
+                } else if (cId > 0) {
+                    // Fallback: Si no se encuentra el usuario pero tenemos ID
+                    client = { id: cId, fullName: `${cId}`, email: '' };
+                }
+            }
+
+            // Barbero
+            let barber = appointment.barber || appointment.Barber;
+            if (!barber) {
+                const userBarber = userMap.get(bId);
+                if (userBarber) {
+                    barber = {
+                        id: userBarber.id,
+                        fullName: userBarber.fullName,
+                        email: userBarber.email,
+                    };
+                } else if (appointment.barberName) {
+                    barber = { id: bId, fullName: appointment.barberName, email: '' }; // Fallback
+                } else if (bId > 0) {
+                    // Fallback: Si no se encuentra el usuario pero tenemos ID
+                    barber = { id: bId, fullName: `${bId}`, email: '' };
+                }
+            }
+
+            // Servicio
+            let haircut = appointment.haircut || appointment.Haircut;
+            if (!haircut) {
+                const hairCutData = haircutMap.get(hId);
+                if (hairCutData) {
+                    haircut = {
+                        id: hairCutData.id,
+                        name: hairCutData.name,
+                        price: hairCutData.price,
+                        durationMinutes: hairCutData.durationMinutes
+                    };
+                } else if (hId > 0) {
+                    haircut = {
+                        id: hId,
+                        name: `${hId}`,
+                        price: 0,
+                        durationMinutes: 0
+                    }
+                }
+            }
+
             return {
                 ...appointment,
                 appointmentDate,
                 appointmentTime,
+                client,
+                barber,
+                haircut
             } as AppointmentResponse;
         });
-        
+
+        console.log('🔍 Citas enriquecidas en frontend:', transformedAppointments);
+
         return transformedAppointments;
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -308,7 +408,7 @@ export const getAvailability = async (
 ): Promise<AvailabilityResponse> => {
     // Validar y normalizar el formato de fecha (fuera del try para usarlo en el catch)
     let normalizedDate = date.trim();
-    
+
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         if (!apiUrl) {
@@ -374,11 +474,11 @@ export const getAvailability = async (
                 params,
             }
         );
-        
+
         // El backend devuelve un array de objetos con start y end
         // Ejemplo: [{ start: '2025-12-16T09:00:00', end: '2025-12-16T09:25:00' }, ...]
         let availableTimes: string[] = [];
-        
+
         if (Array.isArray(response.data)) {
             // Extraer hora directamente del string ISO
             availableTimes = response.data.map((slot: any) => {
@@ -399,7 +499,7 @@ export const getAvailability = async (
         } else if (response.data?.availableTimes && Array.isArray(response.data.availableTimes)) {
             availableTimes = response.data.availableTimes;
         }
-        
+
         return {
             date: normalizedDate,
             availableTimes,

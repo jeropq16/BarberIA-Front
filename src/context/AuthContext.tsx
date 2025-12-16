@@ -39,17 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
                 const token = getToken()
                 console.log('🔍 AuthContext - Cargando usuario, token existe:', !!token)
-                
+
                 if (!token) {
                     console.log('⚠️ AuthContext - No hay token, estableciendo isLoading=false')
                     setIsLoading(false)
                     return
                 }
-                
+
                 // Decodificar el token directamente sin usar isAuthenticated()
                 const userData = getUserFromToken()
                 console.log('🔍 AuthContext - Datos decodificados del token:', userData)
-                
+
                 if (userData) {
                     // Establecer los datos del token inmediatamente
                     const userSession = {
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     }
                     console.log('✅ AuthContext - Estableciendo usuario:', userSession)
                     setUser(userSession)
-                    
+
                     // Intentar cargar perfil completo del servidor en segundo plano
                     getUserProfile()
                         .then(profile => {
@@ -115,10 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      */
     const login = async (token: string) => {
         let redirectPath = '/'
-        
+
         try {
             localStorage.setItem(TOKEN_KEY, token)
-            
+
             const userData = getUserFromToken()
             if (!userData) {
                 throw new Error('Error al decodificar el token')
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 roleValue = Number(userData.role)
             }
-            
+
             const roleStr = String(userData.role)
             if (roleValue === 1 || roleValue === UserRole.Client || roleStr === '1') {
                 redirectPath = '/appointments'
@@ -139,6 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 redirectPath = '/dashboard-barber'
             } else if (roleValue === 3 || roleValue === UserRole.Admin || roleStr === '3') {
                 redirectPath = '/dashboard-admin'
+            } else {
+                console.warn('⚠️ AuthContext - Rol desconocido o no válido:', userData.role)
             }
 
             setUser({
@@ -146,17 +148,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 profile: null,
             })
 
+            // Navegar usando el router de Next.js
+            router.push(redirectPath)
+
         } catch (error) {
             console.error('Error saving user session:', error)
             showToast.error('Error al iniciar sesión')
             throw error
         }
 
-        if (typeof window !== 'undefined') {
-            window.location.href = redirectPath
-        }
-
-        // Intentar cargar perfil completo en segundo plano (no bloquea la redirección)
+        // Intentar cargar perfil completo en segundo plano
         getUserProfile()
             .then(profile => {
                 setUser(prev => prev ? { ...prev, profile } : null)
@@ -193,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const profile = await getUserProfile()
             const userData = getUserFromToken()
-            
+
             if (userData) {
                 setUser({
                     ...userData,

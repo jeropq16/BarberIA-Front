@@ -30,7 +30,14 @@ export const decodeToken = (token: string): DecodedToken | null => {
         }
 
         const payload = parts[1];
-        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+        let base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+
+        // Add padding if needed
+        const pad = base64.length % 4;
+        if (pad) {
+            base64 += '='.repeat(4 - pad);
+        }
+
         const jsonPayload = decodeURIComponent(
             atob(base64)
                 .split('')
@@ -43,9 +50,14 @@ export const decodeToken = (token: string): DecodedToken | null => {
         const roleClaim = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
         const emailClaim = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
         const nameIdentifierClaim = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
-        
+
         let roleValue = decoded[roleClaim] || decoded.role || decoded.Role || decoded.roleid || decoded.RoleId || decoded.roleId || decoded.userRole || decoded.UserRole;
-        
+
+        // Handle array of roles (take the first one)
+        if (Array.isArray(roleValue)) {
+            roleValue = roleValue[0];
+        }
+
         if (typeof roleValue === 'string') {
             if (roleValue.toLowerCase() === 'admin') {
                 roleValue = 3;
